@@ -1,5 +1,8 @@
 module RecurrenceRelationships
+using LinearAlgebra, InfiniteArrays, LazyArrays
+import LazyArrays: AbstractCachedArray, LazyArrayStyle
+export RecurrenceArray
 
-greet() = print("Hello World!")
+include("recurrence.jl")
 
 end # module RecurrenceRelationships
