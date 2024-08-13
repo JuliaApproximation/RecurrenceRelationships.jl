@@ -1,3 +1,9 @@
+module RecurrenceRelationshipsFillArraysExt
+using RecurrenceRelationships, FillArrays
+using RecurrenceRelationships.LinearAlgebra
+
+import RecurrenceRelationships: _forwardrecurrence_next, _clenshaw_next, _clenshaw_next!
+
 # special case for B[n] == 0
 Base.@propagate_inbounds _forwardrecurrence_next(n, A, ::Zeros, C, x, p0, p1) = muladd(A[n]*x, p1, -C[n]*p0)
 # special case for Chebyshev U
@@ -26,19 +32,6 @@ Base.@propagate_inbounds function _clenshaw_next!(n, A::AbstractVector, ::Zeros,
 end
 
 
-# Operator * f Clenshaw
-Base.@propagate_inbounds function _clenshaw_next!(n, A::AbstractFill, ::Zeros, C::Ones, X::AbstractMatrix, c, f::AbstractVector, bn1::AbstractVector{T}, bn2::AbstractVector{T}) where T
-    muladd!(getindex_value(A), X, bn1, -one(T), bn2)
-    bn2 .+= c[n] .* f
-    bn2
-end
-
-Base.@propagate_inbounds function _clenshaw_next!(n, A, ::Zeros, C, X::AbstractMatrix, c, f::AbstractVector, bn1::AbstractVector{T}, bn2::AbstractVector{T}) where T
-    muladd!(A[n], X, bn1, -C[n+1], bn2)
-    bn2 .+= c[n] .* f
-    bn2
-end
-
 # allow special casing first arg, for ChebyshevT in ClassicalOrthogonalPolynomials
 Base.@propagate_inbounds function _clenshaw_first!(A, ::Zeros, C, X, c, bn1, bn2) 
     muladd!(A[1], X, bn1, -C[2], bn2)
@@ -51,4 +44,5 @@ Base.@propagate_inbounds function _clenshaw_first!(A, ::Zeros, C, X, c, f::Abstr
     muladd!(A[1], X, bn1, -C[2], bn2)
     bn2 .+= c[1] .* f
     bn2
+end
 end

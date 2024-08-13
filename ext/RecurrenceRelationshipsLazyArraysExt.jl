@@ -1,3 +1,10 @@
+module RecurrenceRelationshipsLazyArraysExt
+using RecurrenceRelationships, LazyArrays
+using RecurrenceRelationships.LinearAlgebra
+using LazyArrays.FillArrays
+
+import RecurrenceRelationships: _forwardrecurrence_next, _clenshaw_next, _clenshaw_next!
+
 ##
 # For Chebyshev T. Note the shift in indexing is fine due to the AbstractFill
 ##

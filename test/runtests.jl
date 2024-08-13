@@ -1,8 +1,4 @@
-using RecurrenceRelationships, Test
-
-
-using FastTransforms, FillArrays, Test
-import FastTransforms: clenshaw, clenshaw!, forwardrecurrence!, forwardrecurrence
+using RecurrenceRelationships, FillArrays, Test
 
 @testset "clenshaw" begin
     @testset "Chebyshev T" begin
