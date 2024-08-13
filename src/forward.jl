@@ -16,10 +16,6 @@ end
 
 
 Base.@propagate_inbounds _forwardrecurrence_next(n, A, B, C, x, p0, p1) = muladd(muladd(A[n],x,B[n]), p1, -C[n]*p0)
-# special case for B[n] == 0
-Base.@propagate_inbounds _forwardrecurrence_next(n, A, ::Zeros, C, x, p0, p1) = muladd(A[n]*x, p1, -C[n]*p0)
-# special case for Chebyshev U
-Base.@propagate_inbounds _forwardrecurrence_next(n, A::AbstractFill, ::Zeros, C::Ones, x, p0, p1) = muladd(getindex_value(A)*x, p1, -p0)
 
 
 # this supports adaptivity: we can populate `v` for large `n`
@@ -51,11 +47,6 @@ forwardrecurrence(N::Integer, A::AbstractVector, B::AbstractVector, C::AbstractV
 
 
 
-##
-# For Chebyshev T. Note the shift in indexing is fine due to the AbstractFill
-##
-Base.@propagate_inbounds _forwardrecurrence_next(n, A::Vcat{<:Any,1,<:Tuple{<:Number,<:AbstractFill}}, B::Zeros, C::Ones, x, p0, p1) = 
-    _forwardrecurrence_next(n, A.args[2], B, C, x, p0, p1)
 
 function initiateforwardrecurrence(N, A, B, C, x, μ)
     T = promote_type(eltype(A), eltype(B), eltype(C), typeof(x))

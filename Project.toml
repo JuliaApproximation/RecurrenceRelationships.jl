@@ -4,21 +4,25 @@ authors = ["Sheehan Olver <solver@mac.com>"]
 version = "0.0.1"
 
 [deps]
-InfiniteArrays = "4858937d-0d70-526a-a4dd-2d5cb5dd786c"
+FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
 LazyArrays = "5078a376-72f3-5289-bfd5-ec5146d43c02"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
+[weakdeps]
+FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
+LazyArrays = "5078a376-72f3-5289-bfd5-ec5146d43c02"
+
+[extensions]
+RecurrenceRelationshipsFillArraysExt = "FillArrays"
+RecurrenceRelationshipsLazyArraysExt = "LazyArrays"
+
 [compat]
-ClassicalOrthogonalPolynomials = "0.13"
-InfiniteArrays = "0.14"
-LazyArrays = "2"
 SpecialFunctions = "1, 2"
-julia = "1.10"
+julia = "1.6"
 
 [extras]
-ClassicalOrthogonalPolynomials = "b30e2e7b-c4ee-47da-9d5f-2c5c27239acd"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["ClassicalOrthogonalPolynomials", "Test"]
+test = ["SpecialFunctions", "Test"]

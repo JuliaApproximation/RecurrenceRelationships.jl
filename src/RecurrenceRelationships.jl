@@ -1,9 +1,7 @@
 module RecurrenceRelationships
-using LinearAlgebra, InfiniteArrays, LazyArrays
-import LazyArrays: AbstractCachedArray, LazyArrayStyle
-import Base: size, getindex, broadcasted, copy, view, +, -
-export RecurrenceArray
+using LinearAlgebra
 
-include("recurrence.jl")
+include("forward.jl")
+include("clenshaw.jl")
 
 end # module RecurrenceRelationships
