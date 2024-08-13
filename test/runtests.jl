@@ -1,4 +1,4 @@
-using RecurrenceRelationships, FillArrays, Test
+using RecurrenceRelationships, FillArrays, LazyArrays, Test
 
 @testset "clenshaw" begin
     @testset "Chebyshev T" begin
