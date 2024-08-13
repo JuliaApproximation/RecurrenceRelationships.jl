@@ -21,6 +21,8 @@ SpecialFunctions = "1, 2"
 julia = "1.6"
 
 [extras]
+FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
+LazyArrays = "5078a376-72f3-5289-bfd5-ec5146d43c02"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
