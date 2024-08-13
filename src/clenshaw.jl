@@ -12,14 +12,14 @@ If `c` is a matrix this treats each column as a separate vector of coefficients,
 if `x` is a number and a matrix if `x` is a vector.
 """
 clenshaw!(c::AbstractVector, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::AbstractVector) =
-    clenshaw!(c, A, B, C, x, Ones{eltype(x)}(length(x)), x)
+    clenshaw!(c, A, B, C, x, one(eltype(x)), x)
 
 clenshaw!(c::AbstractMatrix, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::Number, f::AbstractVector) =
     clenshaw!(c, A, B, C, x, one(eltype(x)), f)
 
 
 clenshaw!(c::AbstractMatrix, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::AbstractVector, f::AbstractMatrix) =
-    clenshaw!(c, A, B, C, x, Ones{eltype(x)}(length(x)), f)
+    clenshaw!(c, A, B, C, x, one(eltype(x)), f)
 
 
 """
@@ -30,7 +30,7 @@ where `A`, `B`, and `C` are `AbstractVector`s containing the recurrence coeffici
 as defined in DLMF and ϕ₀ is the zeroth polynomial,
 overwriting `f` with the results.
 """
-function clenshaw!(c::AbstractVector, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::AbstractVector, ϕ₀::AbstractVector, f::AbstractVector)
+function clenshaw!(c::AbstractVector, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::AbstractVector, ϕ₀, f::AbstractVector)
     f .= ϕ₀ .* clenshaw.(Ref(c), Ref(A), Ref(B), Ref(C), x)
 end
 
@@ -43,7 +43,7 @@ function clenshaw!(c::AbstractMatrix, A::AbstractVector, B::AbstractVector, C::A
     f
 end
 
-function clenshaw!(c::AbstractMatrix, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::AbstractVector, ϕ₀::AbstractVector, f::AbstractMatrix)
+function clenshaw!(c::AbstractMatrix, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::AbstractVector, ϕ₀, f::AbstractMatrix)
     (size(x,1),size(c,2)) == size(f) || throw(DimensionMismatch("coeffients size and output length must match"))
     @inbounds for j in axes(c,2)
         clenshaw!(view(c,:,j), A, B, C, x, ϕ₀, view(f,:,j))
@@ -55,6 +55,13 @@ Base.@propagate_inbounds _clenshaw_next(n, A, B, C, x, c, bn1, bn2) = muladd(mul
 
 # allow special casing first arg, for ChebyshevT in OrthogonalPolynomialsQuasi
 Base.@propagate_inbounds _clenshaw_first(A, B, C, x, c, bn1, bn2) = muladd(muladd(A[1],x,B[1]), bn1, muladd(-C[2],bn2,c[1]))
+
+function check_clenshaw_recurrences(N, A, B, C)
+    if length(A) < N || length(B) < N || length(C) < N+1
+        throw(ArgumentError("A, B must contain at least $N entries and C must contain at least $(N+1) entrie"))
+    end
+end
+
 
 
 """

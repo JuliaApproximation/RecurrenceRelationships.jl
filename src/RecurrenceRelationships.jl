@@ -1,6 +1,6 @@
 module RecurrenceRelationships
 using LinearAlgebra
-export forwardrecurrence, clenshaw
+export forwardrecurrence, forwardrecurrence!, clenshaw, clenshaw!
 
 include("forward.jl")
 include("clenshaw.jl")
