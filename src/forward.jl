@@ -41,9 +41,17 @@ end
 
 
 
+"""
+   forwardrecurrence(N, A, B, C, x)
 
+evaluates the first `N` orthogonal polynomials at points `x`,
+where `A`, `B`, and `C` are `AbstractVector`s containing the first form recurrence coefficients,
+i.e. it returns 
+"""
 forwardrecurrence(N::Integer, A::AbstractVector, B::AbstractVector, C::AbstractVector, x) =
     forwardrecurrence!(Vector{promote_type(eltype(A),eltype(B),eltype(C),typeof(x))}(undef, N), A, B, C, x)
+
+forwardrecurrence(A::AbstractVector, B::AbstractVector, C::AbstractVector, x) = forwardrecurrence(min(length(A), length(B), length(C)), A, B, C, x)
 
 
 
