@@ -17,6 +17,7 @@ RecurrenceRelationshipsFillArraysExt = "FillArrays"
 RecurrenceRelationshipsLazyArraysExt = "LazyArrays"
 
 [compat]
+FillArrays = "1"
 SpecialFunctions = "1, 2"
 julia = "1.6"
 
