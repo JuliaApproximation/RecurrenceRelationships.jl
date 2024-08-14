@@ -1,6 +1,5 @@
 module RecurrenceRelationshipsFillArraysExt
 using RecurrenceRelationships, FillArrays
-using RecurrenceRelationships.LinearAlgebra
 using FillArrays: AbstractFill, getindex_value
 
 import RecurrenceRelationships: _forwardrecurrence_next, _clenshaw_next

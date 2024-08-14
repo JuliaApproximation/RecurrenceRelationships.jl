@@ -1,6 +1,5 @@
 module RecurrenceRelationshipsLazyArraysExt
 using RecurrenceRelationships, LazyArrays
-using RecurrenceRelationships.LinearAlgebra
 using LazyArrays.FillArrays
 
 import RecurrenceRelationships: _forwardrecurrence_next, _clenshaw_next

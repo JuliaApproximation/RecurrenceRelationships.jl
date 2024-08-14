@@ -1,4 +1,4 @@
-using RecurrenceRelationships, Test
+using RecurrenceRelationships, LinearAlgebra, Test
 using FillArrays, LazyArrays
 
 @testset "forward/clenshaw" begin
