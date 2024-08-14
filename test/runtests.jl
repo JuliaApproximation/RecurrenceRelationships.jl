@@ -1,6 +1,7 @@
-using RecurrenceRelationships, FillArrays, LazyArrays, Test
+using RecurrenceRelationships, LinearAlgebra, Test
+using FillArrays, LazyArrays
 
-@testset "clenshaw" begin
+@testset "forward/clenshaw" begin
     @testset "Chebyshev T" begin
         for elty in (Float64, Float32)
             c = [1,2,3]
@@ -134,5 +135,18 @@ using RecurrenceRelationships, FillArrays, LazyArrays, Test
         @test forwardrecurrence(N, A, B, C, 0.1) == forwardrecurrence(N, A, Vector(B), C, 0.1)
         c = randn(N)
         @test clenshaw(c, A, B, C, 0.1) == clenshaw(c, A, Vector(B), C, 0.1)
+    end
+end
+
+@testset "olver" begin
+    N = 1000
+    x = 0.1
+    a,b,c = ones(N-1), -range(2; step=2, length=N)/x, ones(N-1)
+    j = olver([1; zeros(N-1)], a,b,c)
+    T = SymTridiagonal(Vector(b), c)
+    if VERSION ≥ v"1.10" # NoPivot doesn't exist in v1.6
+        L, U = lu(T, NoPivot())
+        n = length(j)
+        @test U[1:n,1:n] \ (L[1:n,1:n] \ [1; zeros(n-1)]) ≈ j
     end
 end
