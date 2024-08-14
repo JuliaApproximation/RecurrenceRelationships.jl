@@ -144,7 +144,9 @@ end
     a,b,c = ones(N-1), -range(2; step=2, length=N)/x, ones(N-1)
     j = olver([1; zeros(N-1)], a,b,c)
     T = SymTridiagonal(Vector(b), c)
-    L, U = lu(T, NoPivot())
-    n = length(j)
-    @test U[1:n,1:n] \ (L[1:n,1:n] \ [1; zeros(n-1)]) ≈ j
+    if VERSION ≥ v"1.10" # NoPivot doesn't exist in v1.6
+        L, U = lu(T, NoPivot())
+        n = length(j)
+        @test U[1:n,1:n] \ (L[1:n,1:n] \ [1; zeros(n-1)]) ≈ j
+    end
 end
