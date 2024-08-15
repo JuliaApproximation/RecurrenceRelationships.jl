@@ -1,7 +1,75 @@
 using RecurrenceRelationships, LinearAlgebra, Test
 using FillArrays, LazyArrays
 
-@testset "forward/clenshaw" begin
+
+
+@testset "forward" begin
+    @testset "Chebyshev U" begin
+        N = 5
+        A, B, C = Fill(2,N-1), Zeros{Int}(N-1), Ones{Int}(N)
+        @testset "forwardrecurrence!" begin
+            @test @inferred(forwardrecurrence(N, A, B, C, 1)) == @inferred(forwardrecurrence!(Vector{Int}(undef,N), A, B, C, 1)) == 1:N
+            @test forwardrecurrence!(Vector{Int}(undef,N), A, B, C, -1) == (-1) .^ (0:N-1) .* (1:N)
+            @test forwardrecurrence(N, A, B, C, 0.1) ≈ forwardrecurrence!(Vector{Float64}(undef,N), A, B, C, 0.1) ≈
+                    sin.((1:N) .* acos(0.1)) ./ sqrt(1-0.1^2)
+        end
+    end
+
+    @testset "Chebyshev-as-general" begin
+        N = 5
+        A, B, C = [1; fill(2,N-2)], fill(0,N-1), fill(1,N)
+        Af, Bf, Cf = float(A), float(B), float(C)
+        @test forwardrecurrence(N, A, B, C, 1) == forwardrecurrence!(Vector{Int}(undef,N), A, B, C, 1) == ones(Int,N)
+        @test forwardrecurrence!(Vector{Int}(undef,N), A, B, C, -1) == (-1) .^ (0:N-1)
+        @test forwardrecurrence(N, A, B, C, 0.1) ≈ forwardrecurrence!(Vector{Float64}(undef,N), A, B, C, 0.1) ≈ cos.((0:N-1) .* acos(0.1))
+    end
+
+    @testset "Legendre" begin
+        @testset "Float64" begin
+            N = 5
+            n = 0:N-1
+            A = (2n .+ 1) ./ (n .+ 1)
+            B = zeros(N)
+            C = n ./ (n .+ 1)
+            v_1 = forwardrecurrence(N, A, B, C, 1)
+            v_f = forwardrecurrence(N, A, B, C, 0.1)
+            @test v_1 ≈ ones(N)
+            @test forwardrecurrence(N, A, B, C, -1) ≈ (-1) .^ (0:N-1)
+            @test v_f ≈ [1,0.1,-0.485,-0.1475,0.3379375]
+        end
+
+        @testset "BigFloat" begin
+            N = 5
+            n = BigFloat(0):N-1
+            A = (2n .+ 1) ./ (n .+ 1)
+            B = zeros(N)
+            C = n ./ (n .+ 1)
+            @test forwardrecurrence(N, A, B, C, parse(BigFloat,"0.1")) ≈ [1,big"0.1",big"-0.485",big"-0.1475",big"0.3379375"]
+        end
+    end
+
+    @testset "Int" begin
+        N = 10; A = 1:10; B = 2:11; C = range(3; step=2, length=N+1)
+        v_i = forwardrecurrence(N, A, B, C, 1)
+        v_f = forwardrecurrence(N, A, B, C, 0.1)
+        @test v_i isa Vector{Int}
+        @test v_f isa Vector{Float64}
+    end
+
+    @testset "Tridiagonal and forward recurrence" begin
+        N = 2000
+        z = 100.1
+        a,b,c = ones(N-1) .- 0.5*(1:N-1) .^ (-1), -range(2; step=2, length=N)/z, ones(N-1)  .+ (1:N-1) .^ (-2)
+        A,B,C = 1 ./ c, -b[1:end-1]./c, [0; a[1:end-1]./c[2:end]]
+        x = 0.1
+        u_for = forwardrecurrence(10, A, B, C, x)
+        @test u_for[2] ≈ (A[1]*x + B[1])
+        @test u_for[3] ≈ (A[2]*x + B[2])u_for[2] - C[2]u_for[1]
+        u_bac = ([[1; zeros(N-1)]'; Tridiagonal(a, Vector(b) .- x, c)[1:end-1,:]] \ [1; zeros(N-1)])[1:10]
+        @test u_for ≈ u_bac
+    end
+end
+@testset "clenshaw" begin
     @testset "Chebyshev T" begin
         c = [1,2,3]
         @test @inferred(clenshaw(c,1)) ≡ 1 + 2 + 3
@@ -46,13 +114,6 @@ using FillArrays, LazyArrays
     @testset "Chebyshev U" begin
         N = 5
         A, B, C = Fill(2,N-1), Zeros{Int}(N-1), Ones{Int}(N)
-        @testset "forwardrecurrence!" begin
-            @test @inferred(forwardrecurrence(N, A, B, C, 1)) == @inferred(forwardrecurrence!(Vector{Int}(undef,N), A, B, C, 1)) == 1:N
-            @test forwardrecurrence!(Vector{Int}(undef,N), A, B, C, -1) == (-1) .^ (0:N-1) .* (1:N)
-            @test forwardrecurrence(N, A, B, C, 0.1) ≈ forwardrecurrence!(Vector{Float64}(undef,N), A, B, C, 0.1) ≈
-                    sin.((1:N) .* acos(0.1)) ./ sqrt(1-0.1^2)
-        end
-
         c = [1,2,3]
         @test c'forwardrecurrence(3, A, B, C, 0.1) ≈ clenshaw([1,2,3], A, B, C, 0.1) ≈
             1 + (2sin(2acos(0.1)) + 3sin(3acos(0.1)))/sqrt(1-0.1^2)
@@ -65,15 +126,6 @@ using FillArrays, LazyArrays
     end
 
     @testset "Chebyshev-as-general" begin
-        @testset "forwardrecurrence!" begin
-            N = 5
-            A, B, C = [1; fill(2,N-2)], fill(0,N-1), fill(1,N)
-            Af, Bf, Cf = float(A), float(B), float(C)
-            @test forwardrecurrence(N, A, B, C, 1) == forwardrecurrence!(Vector{Int}(undef,N), A, B, C, 1) == ones(Int,N)
-            @test forwardrecurrence!(Vector{Int}(undef,N), A, B, C, -1) == (-1) .^ (0:N-1)
-            @test forwardrecurrence(N, A, B, C, 0.1) ≈ forwardrecurrence!(Vector{Float64}(undef,N), A, B, C, 0.1) ≈ cos.((0:N-1) .* acos(0.1))
-        end
-
         c, A, B, C = [1,2,3], [1,2,2], fill(0,3), fill(1,4)
         cf, Af, Bf, Cf = float(c), float(A), float(B), float(C)
         @test @inferred(clenshaw(c, A, B, C, 1)) ≡ 6
@@ -99,9 +151,6 @@ using FillArrays, LazyArrays
             C = n ./ (n .+ 1)
             v_1 = forwardrecurrence(N, A, B, C, 1)
             v_f = forwardrecurrence(N, A, B, C, 0.1)
-            @test v_1 ≈ ones(N)
-            @test forwardrecurrence(N, A, B, C, -1) ≈ (-1) .^ (0:N-1)
-            @test v_f ≈ [1,0.1,-0.485,-0.1475,0.3379375]
 
             n = 0:N # need extra entry for C in Clenshaw
             C = n ./ (n .+ 1)
@@ -112,23 +161,11 @@ using FillArrays, LazyArrays
                 @test clenshaw!(c, A, B, C, [1.0,0.1], [1.0,1.0], [0.0,0.0])  ≈ [v_1[j],v_f[j]] # libfasttransforms
             end
         end
-
-        @testset "BigFloat" begin
-            N = 5
-            n = BigFloat(0):N-1
-            A = (2n .+ 1) ./ (n .+ 1)
-            B = zeros(N)
-            C = n ./ (n .+ 1)
-            @test forwardrecurrence(N, A, B, C, parse(BigFloat,"0.1")) ≈ [1,big"0.1",big"-0.485",big"-0.1475",big"0.3379375"]
-        end
     end
 
     @testset "Int" begin
         N = 10; A = 1:10; B = 2:11; C = range(3; step=2, length=N+1)
         v_i = forwardrecurrence(N, A, B, C, 1)
-        v_f = forwardrecurrence(N, A, B, C, 0.1)
-        @test v_i isa Vector{Int}
-        @test v_f isa Vector{Float64}
 
         j = 3
         @test clenshaw([zeros(Int,j-1); 1; zeros(Int,N-j)], A, B, C, 1) == v_i[j]
@@ -151,27 +188,54 @@ using FillArrays, LazyArrays
 end
 
 @testset "olver" begin
-    N = 1000
-    x = 0.1
-    a,b,c = ones(N-1), -range(2; step=2, length=N)/x, ones(N-1)
-    j = olver(a, b, c, [1; zeros(N-1)])
-    @test j == olver(a, b, c, [1; zeros(N-1)], 5) ≈ olver(a, b, c, [1; zeros(N-1)], 100)[1:9]
-    @test length(olver(a, b, c, [1; zeros(N-1)], 100)) > 100
-    @test olver(a, b, c, [1]) ≈ [0.05]
+    @testset "Bessel" begin
+        N = 1000
+        x = 0.1
+        a,b,c = ones(N-1), -range(2; step=2, length=N)/x, ones(N-1)
+        j = olver(a, b, c, [1; zeros(N-1)])
+        @test j == olver(a, b, c, [1; zeros(N-1)], 5) ≈ olver(a, b, c, [1; zeros(N-1)], 100)[1:8]
+        @test length(olver(a, b, c, [1; zeros(N-1)], 100)) == 100
+        @test olver(a, b, c, [1]) ≈ [-0.05]
 
-    if VERSION ≥ v"1.10" # NoPivot doesn't exist in v1.6
-        T = SymTridiagonal(Vector(b), c)
+        if VERSION ≥ v"1.10" # NoPivot doesn't exist in v1.6
+            T = SymTridiagonal(Vector(b), c)
+            L, U = lu(T, NoPivot())
+            n = length(j)
+            @test U[1:n,1:n] \ (L[1:n,1:n] \ [1; zeros(n-1)]) ≈ j
+        end
+    end
+
+    @testset "non-symmetric" begin
+        N = 2000
+        z = 30.1
+        a,b,c = 2ones(N-1) .- 0.5*cos.(1:N-1), -range(2; step=2, length=N)/z, 2ones(N-1)  .+ sin.(1:N-1)
+        
+        f = [cos.(-(1:50)); exp.(-(1:N))]
+        u = olver(a, b, c, f)
+        T = Tridiagonal(a, Vector(b), c)
         L, U = lu(T, NoPivot())
-        n = length(j)
-        @test U[1:n,1:n] \ (L[1:n,1:n] \ [1; zeros(n-1)]) ≈ j
+        n = length(u)
 
-        @testset "derivation" begin
-            d = [0.0]; r = [0.0]; f = [1; zeros(N-1)];
-            d,ε = RecurrenceRelationships.olver_forward!(d, r, a, b, c, f)
+        @testset "error" begin
+            d = [0.0]; r = [0.0];
+            d,r,ε = RecurrenceRelationships.olver_forward!(d, r, a, b, c, f; atol=0.1)
             n = length(d)
-            @test L[1:n,1:n] \ f[1:n] == d
+            @test Bidiagonal(ones(n+1), a[1:n] ./ r[1:n], :L) ≈ L[1:n+1,1:n+1]
             
-            @test maximum(abs, U[1:n+1,1:n+1] \ ([d; 0] -  L[1:n+1,1:n+1] \ f[1:n+1])) == ε
+            g = L[1:n+1,1:n+1] \ f[1:n+1]
+            @test g[1:n] ≈ d
+            er = U[1:n+1,1:n+1] \ ([d; 0] -  g)
+            @test !(maximum(abs,er) ≈ last(er)) # make sure non-degenerate error
+            A,B,C = 1 ./ c, -b[1:end-1]./c, [0; a[1:end-1]./c[2:end]]
+            p = forwardrecurrence(n+2, A, B, C)
+            @test norm(T[1:n+1,1:n+2]*p) ≤ 10E-14
+            @test g[n+1]*p[1:n+1] ./ (p[n+2]c[n+1]) ≈ er
+
+            @test c[1]p[2]/p[1] ≈ -r[1]
+            @test c[2]p[3]/p[2] ≈ -r[2]
+            @test p[n+1]/(p[n+2] * c[n+1]) ≈ -1/r[n+1]
+
+            @test maximum(abs, er) ≈ ε # we have captured the exact error
         end
     end
 end

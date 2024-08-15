@@ -14,12 +14,13 @@ function olver_forward!(d::AbstractVector{T}, r, a, b, c, f; atol=eps(T)) where 
     resize!(r, Ñ)
     resize!(d, Ñ)
 
-    r[1] = b[1]/c[1]
+    r[1] = b[1]
     M = zero(T)
     # d[1] is left unmodified
     d[1] = f[1]
     for k = 2:N
         d[k],r[k] = olver_forward_next(d, r, a, b, c, f, k)
+        M = max(M*c[k-1],one(T)) / abs(r[k])
     end
 
     for k = N+1:length(f)
@@ -29,20 +30,20 @@ function olver_forward!(d::AbstractVector{T}, r, a, b, c, f; atol=eps(T)) where 
             resize!(d, Ñ)
         end
         d[k],r[k] = olver_forward_next(d, r, a, b, c, f, k)
-        M = max(M,one(T)) / abs(r[k])
+        M = max(M*c[k-1],one(T)) / abs(r[k])
         ε = M * abs(d[k])
         if ε ≤ atol
-            return resize!(d,k-1), ε
+            return resize!(d,k-1), resize!(r,k), ε
         end
     end
-    d, zero(T)
+    d, r, zero(T)
 end
 
 function olver!(d::AbstractVector{T}, r, a, b, c, f; atol=eps(T)) where T
-    d,_ = olver_forward!(d, r, a, b, c, f; atol)
+    olver_forward!(d, r, a, b, c, f; atol)
     # backsubstitution
     N = length(d)
-    d[N] /= -r[N]
+    d[N] /= r[N]
     for k = N-1:-1:1
         d[k] = olver_backward_next(d, r, c, k)
     end

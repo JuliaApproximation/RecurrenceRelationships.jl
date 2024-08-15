@@ -6,7 +6,7 @@ where `A`, `B`, and `C` are `AbstractVector`s containing the recurrence coeffici
 as defined in DLMF,
 overwriting `v` with the results.
 """
-function forwardrecurrence!(v::AbstractVector{T}, A::AbstractVector, B::AbstractVector, C::AbstractVector, x, p0=one(T)) where T
+function forwardrecurrence!(v::AbstractVector{T}, A::AbstractVector, B::AbstractVector, C::AbstractVector, x=zero(T), p0=one(T)) where T
     N = length(v)
     N == 0 && return v
     length(A)+1 ≥ N && length(B)+1 ≥ N && length(C)+1 ≥ N || throw(ArgumentError("A, B, C must contain at least $(N-1) entries"))
@@ -51,6 +51,10 @@ i.e. it returns
 forwardrecurrence(N::Integer, A::AbstractVector, B::AbstractVector, C::AbstractVector, x) =
     forwardrecurrence!(Vector{promote_type(eltype(A),eltype(B),eltype(C),typeof(x))}(undef, N), A, B, C, x)
 
-forwardrecurrence(A::AbstractVector, B::AbstractVector, C::AbstractVector, x) = forwardrecurrence(min(length(A), length(B), length(C)), A, B, C, x)
+forwardrecurrence(N::Integer, A::AbstractVector, B::AbstractVector, C::AbstractVector) =
+    forwardrecurrence!(Vector{promote_type(eltype(A),eltype(B),eltype(C))}(undef, N), A, B, C)
+
+
+forwardrecurrence(A::AbstractVector, B::AbstractVector, C::AbstractVector, x...) = forwardrecurrence(min(length(A), length(B), length(C)), A, B, C, x...)
 
 
