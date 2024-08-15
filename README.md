@@ -137,18 +137,71 @@ julia> @time cos.((0:n-1) .* θ)
 
 ## Olver's algorithm
 
-Olver's algorithm is an approach to computing minimal solutions to recurrence relationships as well as solve inhomogenuous equations. A simple example is the Bessel equation:
+Olver's algorithm is an approach to computing minimal solutions to recurrence relationships as well as solve inhomogenuous equations. A simple example is the Bessel equation following the [DLMF](https://dlmf.nist.gov/10.74#iv):
 ```julia
-N = 1000
-x = 10.0
-a,b,c = ones(N-1), -range(2; step=2, length=N)/x, ones(N-1)
-u = olver([besselj(1,x); zeros(N-1)], a,b,c)
-u/(besselj(0,x) + 2sum(u))
+julia> N = 1000; x = 10.0;
+
+julia> a,b,c = ones(N-1), -range(2; step=2, length=N)/x, ones(N-1);
+
+julia> u = olver([1; zeros(N-1)], a,b,c);
+
+julia> J0 = -1/(-1 + 2sum(u[2:2:end])); # Use normalization condition
+
+julia> [J0; -u*J0]
+37-element Vector{Float64}:
+ -0.24593576445134843
+  0.043472746168861556
+  0.25463031368512073
+  0.058379379305186836
+ -0.21960268610200867
+ -0.23406152818679374
+ -0.014458842084785059
+  0.21671091768505168
+  0.31785412684385733
+  0.29185568526512007
+  0.20748610663335887
+  0.12311652800159764
+  ⋮
+  1.4405452917644452e-9
+  2.762005267054569e-10
+  5.0937552445022125e-11
+  9.049766986667002e-12
+  1.5510960776464958e-12
+  2.568094792119719e-13
+  4.1122693467730146e-14
+  6.375758981501052e-15
+  9.573158101767982e-16
+  1.339885277011767e-16
+ -1.9396116268561495e-17
 ```
-This matches
+This matches the special functions definition:
 ```julia
-using SpecialFunctions
-[besselj(k,x) for k=0:8]
+julia> [besselj(k,x) for k=0:36]
+37-element Vector{Float64}:
+ -0.2459357644513483
+  0.04347274616886144
+  0.25463031368512057
+  0.058379379305186795
+ -0.2196026861020085
+ -0.23406152818679363
+ -0.014458842084785123
+  0.2167109176850515
+  0.31785412684385717
+  0.29185568526512007
+  0.20748610663335898
+  0.1231165280015976
+  ⋮
+  1.4405452917644441e-9
+  2.7620052670546077e-10
+  5.093755244504228e-11
+  9.049766986775815e-12
+  1.5510960782574664e-12
+  2.568094827689877e-13
+  4.112271491025767e-14
+  6.3758926566612455e-15
+  9.581766237065793e-16
+  1.3970838454349004e-16
+  1.9782068097851055e-17
 ```
 
 ## Clenshaw's algorithm
