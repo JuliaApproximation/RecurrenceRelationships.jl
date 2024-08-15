@@ -1,6 +1,9 @@
 using RecurrenceRelationships, LinearAlgebra, Test
 using FillArrays, LazyArrays
 
+if !isdefined(LinearAlgebra, :NoPivot)
+    const NoPivot = Val(false)
+end
 
 
 @testset "forward" begin
@@ -197,12 +200,10 @@ end
         @test length(olver(a, b, c, [1; zeros(N-1)], 100)) == 100
         @test olver(a, b, c, [1]) ≈ [-0.05]
 
-        if VERSION ≥ v"1.10" # NoPivot doesn't exist in v1.6
-            T = SymTridiagonal(Vector(b), c)
-            L, U = lu(T, NoPivot())
-            n = length(j)
-            @test U[1:n,1:n] \ (L[1:n,1:n] \ [1; zeros(n-1)]) ≈ j
-        end
+        T = SymTridiagonal(Vector(b), c)
+        L, U = lu(T, NoPivot())
+        n = length(j)
+        @test U[1:n,1:n] \ (L[1:n,1:n] \ [1; zeros(n-1)]) ≈ j
     end
 
     @testset "non-symmetric" begin
