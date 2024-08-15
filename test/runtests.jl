@@ -3,14 +3,19 @@ using FillArrays, LazyArrays
 
 @testset "forward/clenshaw" begin
     @testset "Chebyshev T" begin
+        c = [1,2,3]
+        @test @inferred(clenshaw(c,1)) ≡ 1 + 2 + 3
+        @test @inferred(clenshaw(c,0)) ≡ 1 + 0 - 3
+        @test @inferred(clenshaw(c,[-1,0,1])) == clenshaw!(c,[-1,0,1]) == [2,-2,6]
+        @test @inferred(clenshaw(c,0.1)) == 1 + 2*0.1 + 3*cos(2acos(0.1))
+        @test clenshaw(c,[-1,0,1]) isa Vector{Int}
+
+        @test clenshaw(Int[], 0) ≡ 0
+        @test clenshaw([1], 0) ≡ 1
+        @test clenshaw([1,2], 0) ≡ 1
+
         for elty in (Float64, Float32)
-            c = [1,2,3]
             cf = elty.(c)
-            @test @inferred(clenshaw(c,1)) ≡ 1 + 2 + 3
-            @test @inferred(clenshaw(c,0)) ≡ 1 + 0 - 3
-            @test @inferred(clenshaw(c,0.1)) == 1 + 2*0.1 + 3*cos(2acos(0.1))
-            @test @inferred(clenshaw(c,[-1,0,1])) == clenshaw!(c,[-1,0,1]) == [2,-2,6]
-            @test clenshaw(c,[-1,0,1]) isa Vector{Int}
             @test @inferred(clenshaw(elty[],1)) ≡ zero(elty)
 
             x = elty[1,0,0.1]
@@ -30,12 +35,11 @@ using FillArrays, LazyArrays
                 # modifies x and xv
                 @test clenshaw!(cv2, xv) == xv == x == clenshaw([1,3], elty[1,0,0.1])
             end
-
-            @testset "matrix coefficients" begin
-                c = [1 2; 3 4; 5 6]
-                @test clenshaw(c,0.1) ≈ [clenshaw(c[:,1],0.1), clenshaw(c[:,2],0.1)]
-                @test clenshaw(c,[0.1,0.2]) ≈ [clenshaw(c[:,1], 0.1) clenshaw(c[:,2], 0.1); clenshaw(c[:,1], 0.2) clenshaw(c[:,2], 0.2)]
-            end
+        end
+        @testset "matrix coefficients" begin
+            c = [1 2; 3 4; 5 6]
+            @test clenshaw(c,0.1) ≈ [clenshaw(c[:,1],0.1), clenshaw(c[:,2],0.1)]
+            @test clenshaw(c,[0.1,0.2]) ≈ [clenshaw(c[:,1], 0.1) clenshaw(c[:,2], 0.1); clenshaw(c[:,1], 0.2) clenshaw(c[:,2], 0.2)]
         end
     end
 
@@ -135,6 +139,14 @@ using FillArrays, LazyArrays
         @test forwardrecurrence(N, A, B, C, 0.1) == forwardrecurrence(N, A, Vector(B), C, 0.1)
         c = randn(N)
         @test clenshaw(c, A, B, C, 0.1) == clenshaw(c, A, Vector(B), C, 0.1)
+    end
+
+    @testset "LazyArrays" begin
+        n = 1000
+        x = 0.1
+        θ = acos(x)
+        @test forwardrecurrence(Vcat(1, Fill(2, n-1)), Zeros(n), Ones(n), x) ≈ cos.((0:n-1) .* θ)
+        @test clenshaw((1:n), Vcat(1, Fill(2, n-1)), Zeros(n), Ones(n+1), x) ≈ sum(cos(k * θ) * (k+1) for k = 0:n-1)
     end
 end
 

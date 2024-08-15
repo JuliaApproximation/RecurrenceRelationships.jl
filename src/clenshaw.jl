@@ -51,7 +51,7 @@ function clenshaw!(c::AbstractMatrix, A::AbstractVector, B::AbstractVector, C::A
     f
 end
 
-Base.@propagate_inbounds _clenshaw_next(n, A, B, C, x, c, bn1, bn2) = muladd(muladd(A[n],x,B[n]), bn1, muladd(-C[n+1],bn2,c[n]))
+Base.@propagate_inbounds clenshaw_next(n, A, B, C, x, c, bn1, bn2) = muladd(muladd(A[n],x,B[n]), bn1, muladd(-C[n+1],bn2,c[n]))
 
 # allow special casing first arg, for ChebyshevT in OrthogonalPolynomialsQuasi
 Base.@propagate_inbounds _clenshaw_first(A, B, C, x, c, bn1, bn2) = muladd(muladd(A[1],x,B[1]), bn1, muladd(-C[2],bn2,c[1]))
@@ -75,7 +75,6 @@ as defined in DLMF.
 If `c` is a matrix this treats each column as a separate vector of coefficients, returning a vector
 if `x` is a number and a matrix if `x` is a vector.
 """
-
 function clenshaw(c::AbstractVector, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::Number)
     N = length(c)
     T = promote_type(eltype(c),eltype(A),eltype(B),eltype(C),typeof(x))
@@ -86,7 +85,7 @@ function clenshaw(c::AbstractVector, A::AbstractVector, B::AbstractVector, C::Ab
         bn1 = convert(T,c[N])
         N == 1 && return bn1
         for n = N-1:-1:2
-            bn1,bn2 = _clenshaw_next(n, A, B, C, x, c, bn1, bn2),bn1
+            bn1,bn2 = clenshaw_next(n, A, B, C, x, c, bn1, bn2),bn1
         end
         bn1 = _clenshaw_first(A, B, C, x, c, bn1, bn2)
     end
