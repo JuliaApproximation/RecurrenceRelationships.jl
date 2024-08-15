@@ -23,4 +23,4 @@ function olver!(d::AbstractVector{T}, r, a, b, c; atol=eps(T)) where T
     d
 end
 
-olver(d::AbstractVector{T}, a, b, c; atol=eps(T)) where T = olver!(Base.copymutable(d), similar(d), a, b, c; atol)
+olver(d::AbstractVector{T}, a, b, c; atol=eps(float(T))) where T = olver!(convert(AbstractVector{float(T)}, Base.copymutable(d)), similar(d), a, b, c; atol)

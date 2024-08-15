@@ -137,6 +137,20 @@ julia> @time cos.((0:n-1) .* θ)
 
 ## Olver's algorithm
 
+Olver's algorithm is an approach to computing minimal solutions to recurrence relationships as well as solve inhomogenuous equations. A simple example is the Bessel equation:
+```julia
+N = 1000
+x = 10.0
+a,b,c = ones(N-1), -range(2; step=2, length=N)/x, ones(N-1)
+u = olver([besselj(1,x); zeros(N-1)], a,b,c)
+u/(besselj(0,x) + 2sum(u))
+```
+This matches
+```julia
+using SpecialFunctions
+[besselj(k,x) for k=0:8]
+```
+
 ## Clenshaw's algorithm
 
 Clenshaw's algorithm is an efficient way to compute expansions in orthogonal polynomials. Here we compute
