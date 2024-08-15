@@ -155,6 +155,9 @@ end
     x = 0.1
     a,b,c = ones(N-1), -range(2; step=2, length=N)/x, ones(N-1)
     j = olver(a, b, c, [1; zeros(N-1)])
+    @test j == olver(a, b, c, [1; zeros(N-1)], 5) ≈ olver(a, b, c, [1; zeros(N-1)], 100)[1:9]
+    @test length(olver(a, b, c, [1; zeros(N-1)], 100)) > 100
+
     T = SymTridiagonal(Vector(b), c)
     if VERSION ≥ v"1.10" # NoPivot doesn't exist in v1.6
         L, U = lu(T, NoPivot())
