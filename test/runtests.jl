@@ -2,7 +2,7 @@ using RecurrenceRelationships, LinearAlgebra, Test
 using FillArrays, LazyArrays
 
 if !isdefined(LinearAlgebra, :NoPivot)
-    const NoPivot = Val(false)
+    const NoPivot = Val{false}
 end
 
 
