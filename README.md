@@ -6,7 +6,7 @@ including forward recurrence for initial value-problems, [Olver's algorithm](htt
 value problems, and [Clenshaw's algorithm](https://en.wikipedia.org/wiki/Clenshaw_algorithm) for computing dot products with a given vector as needed for
 evaluating expansions in orthogonal polynomials.
 
-## 1. Forward recurrence
+## Forward recurrence
 
 As an example, consider computing the first million Chebyshev U polynomials:
 
@@ -68,5 +68,23 @@ julia> norm(sin.((1:n) .* acos(x)) ./ sin(acos(x)) - forwardrecurrence(fill(2, n
 
 We can make it even faster using FillArrays.jl:
 ```julia
+julia> using FillArrays
 
+julia> @time forwardrecurrence(Fill(2, n), Zeros(n), Ones(n), x)
+  0.003387 seconds (5 allocations: 7.630 MiB)
+1000000-element Vector{Float64}:
+  1.0
+  0.2
+ -0.96
+  ⋮
+  0.6324761476556076
+ -0.7139101449074483
+ -0.7752581766370972
 ```
+
+
+## Olver's algorithm
+
+## Clenshaw's algorithm
+
+Clenshaw's algorithm is an efficient way to compute expansions in orthogonal polynomials. 
