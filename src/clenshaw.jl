@@ -75,7 +75,6 @@ as defined in DLMF.
 If `c` is a matrix this treats each column as a separate vector of coefficients, returning a vector
 if `x` is a number and a matrix if `x` is a vector.
 """
-
 function clenshaw(c::AbstractVector, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::Number)
     N = length(c)
     T = promote_type(eltype(c),eltype(A),eltype(B),eltype(C),typeof(x))

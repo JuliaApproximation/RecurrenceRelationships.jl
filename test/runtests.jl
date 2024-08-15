@@ -136,6 +136,14 @@ using FillArrays, LazyArrays
         c = randn(N)
         @test clenshaw(c, A, B, C, 0.1) == clenshaw(c, A, Vector(B), C, 0.1)
     end
+
+    @testset "LazyArrays" begin
+        n = 1000
+        x = 0.1
+        θ = acos(x)
+        @test forwardrecurrence(Vcat(1, Fill(2, n-1)), Zeros(n), Ones(n), x) ≈ cos.((0:n-1) .* θ)
+        @test clenshaw((1:n), Vcat(1, Fill(2, n-1)), Zeros(n), Ones(n+1), x) ≈ sum(cos(k * θ) * (k+1) for k = 0:n-1)
+    end
 end
 
 @testset "olver" begin
