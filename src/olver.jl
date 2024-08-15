@@ -1,17 +1,26 @@
 
 
+Base.@propagate_inbounds @inline function olver_forward_next(d, r, a, b, c, f, k)
+    r̃ₖ = inv(r[k-1])
+    f[k] - a[k-1]d[k-1]r̃ₖ, b[k] - c[k-1]a[k-1]r̃ₖ
+end
+
+Base.@propagate_inbounds @inline olver_backward_next(d, r, c, k) = (d[k]-c[k]*d[k+1])/r[k]
+
+
+
 function olver!(d::AbstractVector{T}, r, a, b, c, f; atol=eps(T)) where T
     N = length(d) # compute at least `N` entries
-    resize!(r, N+10)
-    resize!(d, N+10)
+    Ñ = min(2N,length(f))
+    resize!(r, Ñ)
+    resize!(d, Ñ)
 
     r[1] = b[1]/c[1]
     M = zero(T)
     # d[1] is left unmodified
     d[1] = f[1]
     for k = 2:N
-        r[k] = b[k] - c[k-1]a[k-1]/r[k-1]
-        d[k] = f[k] - a[k-1]d[k-1]/r[k-1]
+        d[k],r[k] = olver_forward_next(d, r, a, b, c, f, k)
     end
 
     for k = N+1:length(f)
@@ -20,8 +29,7 @@ function olver!(d::AbstractVector{T}, r, a, b, c, f; atol=eps(T)) where T
             resize!(r, Ñ)
             resize!(d, Ñ)
         end
-        r[k] = b[k] - c[k-1]a[k-1]/r[k-1]
-        d[k] = f[k] - a[k-1]d[k-1]/r[k-1]
+        d[k],r[k] = olver_forward_next(d, r, a, b, c, f, k)
         M = max(M,one(T)) / abs(r[k])
         if M * abs(d[k]) ≤ atol
             resize!(d, k)
@@ -33,7 +41,7 @@ function olver!(d::AbstractVector{T}, r, a, b, c, f; atol=eps(T)) where T
     N = length(d)
     d[N] /= -r[N]
     for k = N-1:-1:1
-        d[k] = (d[k]-c[k]*d[k+1])/r[k]
+        d[k] = olver_backward_next(d, r, c, k)
     end
     d
 end

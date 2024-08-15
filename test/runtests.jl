@@ -162,6 +162,8 @@ end
         @test U[1:n,1:n] \ (L[1:n,1:n] \ [1; zeros(n-1)]) ≈ j
     end
 
+    @test olver(a, b, c, [1]) ≈ [0.05]
+
     @testset "derivation" begin
         
     end
