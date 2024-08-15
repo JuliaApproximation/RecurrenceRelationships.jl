@@ -15,6 +15,11 @@ function olver!(d::AbstractVector{T}, r, a, b, c, f; atol=eps(T)) where T
     end
 
     for k = N+1:length(f)
+        if k > length(r)
+            Ñ = min(2length(r),length(f))
+            resize!(r, Ñ)
+            resize!(d, Ñ)
+        end
         r[k] = b[k] - c[k-1]a[k-1]/r[k-1]
         d[k] = f[k] - a[k-1]d[k-1]/r[k-1]
         M = max(M,one(T)) / abs(r[k])
@@ -45,6 +50,7 @@ returns a vector `u` satisfying the 3-term recurrence relationship
 It will compute at least `N` entries, but possibly more, returning the result
 when the backward error between consective truncations is less than `atol`.
 """
-function olver(a, b, c, f, N=1; atol=eps(float(T))) where T
+function olver(a, b, c, f::AbstractVector{T}, N=1; atol=eps(float(T))) where T
     dest = Vector{float(T)}(undef, N)
     olver!(dest, similar(dest), a, b, c, f; atol)
+end

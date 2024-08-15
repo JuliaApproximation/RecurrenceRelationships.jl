@@ -154,7 +154,7 @@ end
     N = 1000
     x = 0.1
     a,b,c = ones(N-1), -range(2; step=2, length=N)/x, ones(N-1)
-    j = olver([1; zeros(N-1)], a,b,c)
+    j = olver(a, b, c, [1; zeros(N-1)])
     T = SymTridiagonal(Vector(b), c)
     if VERSION ≥ v"1.10" # NoPivot doesn't exist in v1.6
         L, U = lu(T, NoPivot())
