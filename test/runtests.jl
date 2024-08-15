@@ -157,17 +157,21 @@ end
     j = olver(a, b, c, [1; zeros(N-1)])
     @test j == olver(a, b, c, [1; zeros(N-1)], 5) ≈ olver(a, b, c, [1; zeros(N-1)], 100)[1:9]
     @test length(olver(a, b, c, [1; zeros(N-1)], 100)) > 100
+    @test olver(a, b, c, [1]) ≈ [0.05]
 
-    T = SymTridiagonal(Vector(b), c)
     if VERSION ≥ v"1.10" # NoPivot doesn't exist in v1.6
+        T = SymTridiagonal(Vector(b), c)
         L, U = lu(T, NoPivot())
         n = length(j)
         @test U[1:n,1:n] \ (L[1:n,1:n] \ [1; zeros(n-1)]) ≈ j
-    end
 
-    @test olver(a, b, c, [1]) ≈ [0.05]
-
-    @testset "derivation" begin
-        
+        @testset "derivation" begin
+            d = [0.0]; r = [0.0]; f = [1; zeros(N-1)];
+            d,ε = RecurrenceRelationships.olver_forward!(d, r, a, b, c, f)
+            n = length(d)
+            @test L[1:n,1:n] \ f[1:n] == d
+            
+            @test maximum(abs, U[1:n+1,1:n+1] \ ([d; 0] -  L[1:n+1,1:n+1] \ f[1:n+1])) == ε
+        end
     end
 end
