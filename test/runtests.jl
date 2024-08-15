@@ -201,7 +201,7 @@ end
         @test olver(a, b, c, [1]) ≈ [-0.05]
 
         T = SymTridiagonal(Vector(b), c)
-        L, U = lu(T, NoPivot())
+        L, U = lu(Matrix(T), NoPivot()) # Matrix due to v1.6 not supporting SymTridiagonal
         n = length(j)
         @test U[1:n,1:n] \ (L[1:n,1:n] \ [1; zeros(n-1)]) ≈ j
     end
@@ -214,7 +214,7 @@ end
         f = [cos.(-(1:50)); exp.(-(1:N))]
         u = olver(a, b, c, f)
         T = Tridiagonal(a, Vector(b), c)
-        L, U = lu(T, NoPivot())
+        L, U = lu(Matrix(T), NoPivot()) # Matrix due to v1.6 not supporting SymTridiagonal
         n = length(u)
 
         @testset "error" begin
