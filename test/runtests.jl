@@ -271,5 +271,6 @@ end
         ζ = z - sqrt(z-1)*sqrt(z+1)
         @test π*ζ .^ (1:length(u)) ≈ u
         @test u ≈ olver(a, b .- z, c, f .+ 0im)
+        @test u[1:5] ≈ olver(a, b .- z, c, f .+ 0im, 5)
     end
 end

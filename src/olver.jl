@@ -19,7 +19,7 @@ function olver_forward!(d::AbstractVector{T}, r, a, b, c, f, N; atol=eps(T)) whe
     d[1] = f[1]
     for k = 2:N
         d[k],r[k] = olver_forward_next(d, r, a, b, c, f, k)
-        M = max(M*abs(c[k-1]),one(T)) / abs(r[k])
+        M = max(M*abs(c[k-1]),one(M)) / abs(r[k])
     end
 
     for k = N+1:length(f)
@@ -56,7 +56,7 @@ function olver_forward!(d::AbstractVector{T}, r, a, b, c, f; atol=eps(T)) where 
             resize!(d, Ñ)
         end
         d[k],r[k] = olver_forward_next(d, r, a, b, c, f, k)
-        M = max(M*abs(c[k-1]),1) / abs(r[k])
+        M = max(M*abs(c[k-1]),one(M)) / abs(r[k])
         ε = M * abs(d[k])
         if ε ≤ atol
             return resize!(d,k-1), resize!(r,k), ε
