@@ -19,7 +19,7 @@ function olver_forward!(d::AbstractVector{T}, r, a, b, c, f, N; atol=eps(T)) whe
     d[1] = f[1]
     for k = 2:N
         d[k],r[k] = olver_forward_next(d, r, a, b, c, f, k)
-        M = max(M*abs(c[k-1]),one(T)) / abs(r[k])
+        M = max(M*abs(c[k-1]),one(M)) / abs(r[k])
     end
 
     for k = N+1:length(f)
@@ -45,7 +45,7 @@ function olver_forward!(d::AbstractVector{T}, r, a, b, c, f; atol=eps(T)) where 
     resize!(d, Ñ)
 
     r[1] = b[1]
-    M = zero(T)
+    M = inv(abs(r[1]))
     # d[1] is left unmodified
     d[1] = f[1]
 
@@ -56,7 +56,7 @@ function olver_forward!(d::AbstractVector{T}, r, a, b, c, f; atol=eps(T)) where 
             resize!(d, Ñ)
         end
         d[k],r[k] = olver_forward_next(d, r, a, b, c, f, k)
-        M = max(M*abs(c[k-1]),1) / abs(r[k])
+        M = max(M*abs(c[k-1]),one(M)) / abs(r[k])
         ε = M * abs(d[k])
         if ε ≤ atol
             return resize!(d,k-1), resize!(r,k), ε
@@ -100,8 +100,8 @@ returns a vector `u` satisfying the 3-term recurrence relationship
 It will compute at least `N` entries, but possibly more, returning the result
 when the backward error of the first `N` entries between consective truncations is less than `atol`.
 """
-function olver(a, b, c, f::AbstractVector{T}, N; atol=eps(float(T))) where T
-    dest = Vector{float(T)}(undef, N)
+function olver(a::AbstractVector{A}, b::AbstractVector{B}, c::AbstractVector{C}, f::AbstractVector{T}, N; atol=eps(float(real(promote_type(A,B,C,T))))) where {A,B,C,T}
+    dest = Vector{float(promote_type(A,B,C,T))}(undef, N)
     olver!(dest, similar(dest), a, b, c, f, N; atol)
 end
 
@@ -116,7 +116,7 @@ returns a vector `u` satisfying the 3-term recurrence relationship
 It will compute the result
 when the backward error between consective truncations is less than `atol`.
 """
-function olver(a, b, c, f::AbstractVector{T}; atol=eps(float(T))) where T
-    dest = Vector{float(T)}(undef, 1)
+function olver(a::AbstractVector{A}, b::AbstractVector{B}, c::AbstractVector{C}, f::AbstractVector{T}; atol=eps(float(real(promote_type(A,B,C,T))))) where {A,B,C,T}
+    dest = Vector{float(promote_type(A,B,C,T))}(undef, 1)
     olver!(dest, similar(dest), a, b, c, f; atol)
 end
