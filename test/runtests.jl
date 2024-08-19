@@ -195,9 +195,11 @@ end
         N = 1000
         x = 0.1
         a,b,c = ones(N-1), -range(2; step=2, length=N)/x, ones(N-1)
-        j = olver(a, b, c, [1; zeros(N-1)])
-        @test j == olver(a, b, c, [1; zeros(N-1)], 5) ≈ olver(a, b, c, [1; zeros(N-1)], 100)[1:8]
-        @test length(olver(a, b, c, [1; zeros(N-1)], 100)) == 100
+        f = [1; zeros(N-1)]
+        j = olver(a, b, c, f)
+        @test j == olver(SymTridiagonal(Vector(b), c), f) == olver(Tridiagonal(a, Vector(b), c), f)
+        @test j[1:5] ≈ olver(a, b, c, f, 5) ≈ olver(a, b, c, f, 100)[1:5]
+        @test length(olver(a, b, c, f, 100)) == 100
         @test olver(a, b, c, [1]) ≈ [-0.05]
 
         T = SymTridiagonal(Vector(b), c)
@@ -211,9 +213,10 @@ end
         z = 30.1
         a,b,c = 2ones(N-1) .- 0.5*cos.(1:N-1), -range(2; step=2, length=N)/z, 2ones(N-1)  .+ sin.(1:N-1)
         
-        f = [cos.(-(1:50)); exp.(-(1:N))]
+        f = [cos.(-(1:50)); exp.(-(1:N-50))]
         u = olver(a, b, c, f)
         T = Tridiagonal(a, Vector(b), c)
+        @test u == olver(T, f)
         L, U = lu(Matrix(T), NoPivot()) # Matrix due to v1.6 not supporting SymTridiagonal
         n = length(u)
 
@@ -237,6 +240,25 @@ end
             @test p[n+1]/(p[n+2] * c[n+1]) ≈ -1/r[n+1]
 
             @test maximum(abs, er) ≈ ε # we have captured the exact error
+        end
+
+        @testset "finite error" begin
+            for k = 1:10
+                d = [0.0]; r = [0.0];
+                d,r,ε = RecurrenceRelationships.olver_forward!(d, r, a, b, c, f,k; atol=0.1)
+                n = length(d)
+            
+                g = L[1:n+1,1:n+1] \ f[1:n+1]
+                @test g[1:n] ≈ d
+                er = U[1:n+1,1:n+1] \ ([d; 0] -  g)
+
+                @test maximum(abs, er[1:k]) ≈ ε # we have captured the exact error
+            end
+
+            d = [0.0]; r = [0.0];
+            d,r,ε = RecurrenceRelationships.olver_forward!(d, r, a, b, c, f,N; atol=0.1)
+            @test iszero(ε)
+            @test length(olver(a, b, c, f, N)) == N
         end
     end
 end
