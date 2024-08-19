@@ -211,7 +211,7 @@ end
         z = 30.1
         a,b,c = 2ones(N-1) .- 0.5*cos.(1:N-1), -range(2; step=2, length=N)/z, 2ones(N-1)  .+ sin.(1:N-1)
         
-        f = [cos.(-(1:50)); exp.(-(1:N))]
+        f = [cos.(-(1:50)); exp.(-(1:N-50))]
         u = olver(a, b, c, f)
         T = Tridiagonal(a, Vector(b), c)
         L, U = lu(Matrix(T), NoPivot()) # Matrix due to v1.6 not supporting SymTridiagonal
@@ -239,7 +239,6 @@ end
             @test maximum(abs, er) ≈ ε # we have captured the exact error
         end
 
-
         @testset "finite error" begin
             for k = 1:10
                 d = [0.0]; r = [0.0];
@@ -252,6 +251,11 @@ end
 
                 @test maximum(abs, er[1:k]) ≈ ε # we have captured the exact error
             end
+
+            d = [0.0]; r = [0.0];
+            d,r,ε = RecurrenceRelationships.olver_forward!(d, r, a, b, c, f,N; atol=0.1)
+            @test iszero(ε)
+            @test length(olver(a, b, c, f, N)) == N
         end
     end
 end
