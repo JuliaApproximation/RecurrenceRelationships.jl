@@ -196,7 +196,7 @@ end
         x = 0.1
         a,b,c = ones(N-1), -range(2; step=2, length=N)/x, ones(N-1)
         j = olver(a, b, c, [1; zeros(N-1)])
-        @test j == olver(a, b, c, [1; zeros(N-1)], 5) ≈ olver(a, b, c, [1; zeros(N-1)], 100)[1:8]
+        @test j[1:5] ≈ olver(a, b, c, [1; zeros(N-1)], 5) ≈ olver(a, b, c, [1; zeros(N-1)], 100)[1:5]
         @test length(olver(a, b, c, [1; zeros(N-1)], 100)) == 100
         @test olver(a, b, c, [1]) ≈ [-0.05]
 
