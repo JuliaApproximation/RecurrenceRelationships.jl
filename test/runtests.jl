@@ -195,9 +195,11 @@ end
         N = 1000
         x = 0.1
         a,b,c = ones(N-1), -range(2; step=2, length=N)/x, ones(N-1)
-        j = olver(a, b, c, [1; zeros(N-1)])
-        @test j[1:5] ≈ olver(a, b, c, [1; zeros(N-1)], 5) ≈ olver(a, b, c, [1; zeros(N-1)], 100)[1:5]
-        @test length(olver(a, b, c, [1; zeros(N-1)], 100)) == 100
+        f = [1; zeros(N-1)]
+        j = olver(a, b, c, f)
+        @test j == olver(SymTridiagonal(Vector(b), c), f) == olver(Tridiagonal(a, Vector(b), c), f)
+        @test j[1:5] ≈ olver(a, b, c, f, 5) ≈ olver(a, b, c, f, 100)[1:5]
+        @test length(olver(a, b, c, f, 100)) == 100
         @test olver(a, b, c, [1]) ≈ [-0.05]
 
         T = SymTridiagonal(Vector(b), c)
@@ -214,6 +216,7 @@ end
         f = [cos.(-(1:50)); exp.(-(1:N-50))]
         u = olver(a, b, c, f)
         T = Tridiagonal(a, Vector(b), c)
+        @test u == olver(T, f)
         L, U = lu(Matrix(T), NoPivot()) # Matrix due to v1.6 not supporting SymTridiagonal
         n = length(u)
 
