@@ -238,5 +238,20 @@ end
 
             @test maximum(abs, er) ≈ ε # we have captured the exact error
         end
+
+
+        @testset "finite error" begin
+            for k = 1:10
+                d = [0.0]; r = [0.0];
+                d,r,ε = RecurrenceRelationships.olver_forward!(d, r, a, b, c, f,k; atol=0.1)
+                n = length(d)
+            
+                g = L[1:n+1,1:n+1] \ f[1:n+1]
+                @test g[1:n] ≈ d
+                er = U[1:n+1,1:n+1] \ ([d; 0] -  g)
+
+                @test maximum(abs, er[1:k]) ≈ ε # we have captured the exact error
+            end
+        end
     end
 end

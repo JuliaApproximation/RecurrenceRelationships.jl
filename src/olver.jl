@@ -10,11 +10,11 @@ Base.@propagate_inbounds @inline olver_backward_next(d, r, c, k) = (d[k]-c[k]*d[
 
 function olver_forward!(d::AbstractVector{T}, r, a, b, c, f, N; atol=eps(T)) where T
     Ñ = min(2N+10,length(f))
-    resize!(r, Ñ)
+    resize!(r, Ñ) # r[k] == c[k]*p[k+1]/p[k]
     resize!(d, Ñ)
 
     r[1] = b[1]
-    M = zero(T)
+    M = inv(abs(r[1]))
     # d[1] is left unmodified
     d[1] = f[1]
     for k = 2:N
