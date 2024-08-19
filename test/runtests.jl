@@ -212,7 +212,7 @@ end
         N = 2000
         z = 30.1
         a,b,c = 2ones(N-1) .- 0.5*cos.(1:N-1), -range(2; step=2, length=N)/z, 2ones(N-1)  .+ sin.(1:N-1)
-        
+
         f = [cos.(-(1:50)); exp.(-(1:N-50))]
         u = olver(a, b, c, f)
         T = Tridiagonal(a, Vector(b), c)
@@ -225,7 +225,7 @@ end
             d,r,ε = RecurrenceRelationships.olver_forward!(d, r, a, b, c, f; atol=0.1)
             n = length(d)
             @test Bidiagonal(ones(n+1), a[1:n] ./ r[1:n], :L) ≈ L[1:n+1,1:n+1]
-            
+
             g = L[1:n+1,1:n+1] \ f[1:n+1]
             @test g[1:n] ≈ d
             er = U[1:n+1,1:n+1] \ ([d; 0] -  g)
@@ -247,7 +247,7 @@ end
                 d = [0.0]; r = [0.0];
                 d,r,ε = RecurrenceRelationships.olver_forward!(d, r, a, b, c, f,k; atol=0.1)
                 n = length(d)
-            
+
                 g = L[1:n+1,1:n+1] \ f[1:n+1]
                 @test g[1:n] ≈ d
                 er = U[1:n+1,1:n+1] \ ([d; 0] -  g)
@@ -260,5 +260,16 @@ end
             @test iszero(ε)
             @test length(olver(a, b, c, f, N)) == N
         end
+    end
+
+    @testset "complex" begin
+        N = 100
+        a,b,c = Fill(1/2,N-1), Zeros{Int}(N), Fill(1/2,N-1)
+        z = 1 + im
+        f = [-π/2; zeros(N-1)]
+        u = olver(a, b .- z, c, f)
+        ζ = z - sqrt(z-1)*sqrt(z+1)
+        @test π*ζ .^ (1:length(u)) ≈ u
+        @test u ≈ olver(a, b .- z, c, f .+ 0im)
     end
 end
