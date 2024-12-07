@@ -277,5 +277,7 @@ end
 end
 
 @testset "DynamicPolynomials" begin
-    @test @inferred(forwardrecurrence(5, A, B, C, x)) == [1,2x,4x^2-1, 8x^3-4x, 16x^4 - 12x^2 + 1]
+    N = 5
+    A, B, C = Fill(2,N-1), Zeros{Int}(N-1), Ones{Int}(N)
+    @test @inferred(forwardrecurrence(N, A, B, C, x)) == [1,2x,4x^2-1, 8x^3-4x, 16x^4 - 12x^2 + 1]
 end
