@@ -1,5 +1,6 @@
 using RecurrenceRelationships, LinearAlgebra, Test
 using FillArrays, LazyArrays
+using DynamicPolynomials
 
 if !isdefined(LinearAlgebra, :NoPivot)
     const NoPivot = Val{false}
@@ -273,4 +274,8 @@ end
         @test u ≈ olver(a, b .- z, c, f .+ 0im)
         @test u[1:5] ≈ olver(a, b .- z, c, f .+ 0im, 5)
     end
+end
+
+@testset "DynamicPolynomials" begin
+    @test @inferred(forwardrecurrence(N, A, B, C, x)) == [1,2x,4x^2-1, 8x^3-4x, 16x^4 - 12x^2 + 1]
 end
