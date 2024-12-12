@@ -185,6 +185,21 @@ end
         @test forwardrecurrence(Vcat(1, Fill(2, n-1)), Zeros(n), Ones(n), x) ≈ cos.((0:n-1) .* θ)
         @test clenshaw((1:n), Vcat(1, Fill(2, n-1)), Zeros(n), Ones(n+1), x) ≈ sum(cos(k * θ) * (k+1) for k = 0:n-1)
     end
+
+    @testset "2D" begin
+        # cheb U recurrence
+        m,n = 5,6
+        coeffs = ((1:m) .+ 2(1:n)')
+        x,y = 0.1,0.2
+        A, B, C = Fill(2,n), Zeros{Int}(n), Ones{Int}(n+1)
+        
+
+        A_T, B_T, C_T = [1; fill(2,m-1)], fill(0,m), fill(1,m+1)
+        @test clenshaw(vec(clenshaw(coeffs, x; dims=1)), A, B, C, y) ≈ clenshaw(vec(clenshaw(coeffs, A, B, C, y; dims=2)), x) ≈
+                only(clenshaw!([0.0], clenshaw!(Matrix{Float64}(undef,1,n), coeffs, x), A, B, C, y)) ≈ 
+                only(clenshaw!([0.0], clenshaw!(Matrix{Float64}(undef,m,1), coeffs, A, B, C, y), x)) ≈
+                forwardrecurrence(A_T, B_T, C_T, x)'coeffs*forwardrecurrence(A, B, C, y)
+    end
 end
 
 @testset "olver" begin

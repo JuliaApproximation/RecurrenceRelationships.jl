@@ -28,13 +28,13 @@ function clenshaw!(f::AbstractVector, c::AbstractVector, A::AbstractVector, B::A
     f .= ϕ₀ .* clenshaw.(Ref(c), Ref(A), Ref(B), Ref(C), x)
 end
 
-function clenshaw!(f::AbstractMatrix, c::AbstractMatrix, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::Number, ϕ₀::Number)
+function clenshaw!(f::AbstractVecOrMat, c::AbstractMatrix, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::Number, ϕ₀::Number)
     m,n = size(c)
-    if size(f) == (1,n) # dims = 1
+    if (size(f,1),size(f,2)) == (1,n) # dims = 1
         @inbounds for j in axes(c,2)
             f[1,j] = ϕ₀ * clenshaw(view(c,:,j), A, B, C, x)
         end
-    elseif size(f) == (m,1) # dims = 2
+    elseif (size(f,1),size(f,2)) == (m,1) # dims = 2
         @inbounds for k in axes(c,1)
             f[k,1] = ϕ₀ * clenshaw(view(c,k,:), A, B, C, x)
         end
@@ -140,11 +140,11 @@ end
 
 function clenshaw!(f::AbstractVecOrMat, c::AbstractMatrix, x::Number)
     m,n = size(c)
-    if size(f) == (1,n) # dims = 1
+    if (size(f,1),size(f,2)) == (1,n) # dims = 1
         @inbounds for j in axes(c,2)
             f[1,j] = clenshaw(view(c,:,j), x)
         end
-    elseif size(f) == (m,1) # dims = 2
+    elseif (size(f,1),size(f,2)) == (m,1) # dims = 2
         @inbounds for k in axes(c,1)
             f[k,1] = clenshaw(view(c,k,:), x)
         end
