@@ -2,10 +2,6 @@ using RecurrenceRelationships, LinearAlgebra, Test
 using FillArrays, LazyArrays
 using DynamicPolynomials
 
-if !isdefined(LinearAlgebra, :NoPivot)
-    const NoPivot = Val{false}
-end
-
 
 @testset "forward" begin
     @testset "Chebyshev U" begin
@@ -78,7 +74,7 @@ end
         c = [1,2,3]
         @test @inferred(clenshaw(c,1)) ≡ 1 + 2 + 3
         @test @inferred(clenshaw(c,0)) ≡ 1 + 0 - 3
-        @test @inferred(clenshaw(c,[-1,0,1])) == clenshaw!(c,[-1,0,1]) == [2,-2,6]
+        @test @inferred(clenshaw(c,[-1,0,1])) == clenshaw!([-1,0,1],c) == [2,-2,6]
         @test @inferred(clenshaw(c,0.1)) == 1 + 2*0.1 + 3*cos(2acos(0.1))
         @test clenshaw(c,[-1,0,1]) isa Vector{Int}
 
@@ -91,27 +87,27 @@ end
             @test @inferred(clenshaw(elty[],1)) ≡ zero(elty)
 
             x = elty[1,0,0.1]
-            @test @inferred(clenshaw(c,x)) ≈ @inferred(clenshaw!(c,copy(x))) ≈
-                @inferred(clenshaw!(c,x,similar(x))) ≈
-                @inferred(clenshaw(cf,x)) ≈ @inferred(clenshaw!(cf,copy(x))) ≈
-                @inferred(clenshaw!(cf,x,similar(x))) ≈ elty[6,-2,-1.74]
+            @test @inferred(clenshaw(c,x)) ≈ @inferred(clenshaw!(copy(x),c)) ≈
+                @inferred(clenshaw!(similar(x),c,x)) ≈
+                @inferred(clenshaw(cf,x)) ≈ @inferred(clenshaw!(copy(x),cf)) ≈
+                @inferred(clenshaw!(similar(x),cf,x)) ≈ elty[6,-2,-1.74]
 
             @testset "Strided" begin
                 cv = view(cf,:)
                 xv = view(x,:)
-                @test clenshaw!(cv, xv, similar(xv)) == clenshaw!(cf,x,similar(x))
+                @test clenshaw!(similar(xv), cv, xv) == clenshaw!(similar(x), cf, x)
 
                 cv2 = view(cf,1:2:3)
-                @test clenshaw!(cv2, xv, similar(xv)) == clenshaw([1,3], x)
+                @test clenshaw!(similar(xv), cv2, xv) == clenshaw([1,3], x)
 
                 # modifies x and xv
-                @test clenshaw!(cv2, xv) == xv == x == clenshaw([1,3], elty[1,0,0.1])
+                @test clenshaw!(xv, cv2) == xv == x == clenshaw([1,3], elty[1,0,0.1])
             end
         end
         @testset "matrix coefficients" begin
             c = [1 2; 3 4; 5 6]
-            @test clenshaw(c,0.1) ≈ [clenshaw(c[:,1],0.1), clenshaw(c[:,2],0.1)]
-            @test clenshaw(c,[0.1,0.2]) ≈ [clenshaw(c[:,1], 0.1) clenshaw(c[:,2], 0.1); clenshaw(c[:,1], 0.2) clenshaw(c[:,2], 0.2)]
+            @test clenshaw(c,0.1; dims=1) ≈ [clenshaw(c[:,1],0.1), clenshaw(c[:,2],0.1)]'
+            @test clenshaw(c,0.1; dims=2) ≈ [clenshaw(c[1,:],0.1); clenshaw(c[2,:],0.1); clenshaw(c[3,:],0.1) ;;]
         end
     end
 
@@ -124,8 +120,8 @@ end
 
         @testset "matrix coefficients" begin
             c = [1 2; 3 4; 5 6]
-            @test clenshaw(c,A,B,C,0.1) ≈ [clenshaw(c[:,1],A,B,C,0.1), clenshaw(c[:,2],A,B,C,0.1)]
-            @test clenshaw(c,A,B,C,[0.1,0.2]) ≈ [clenshaw(c[:,1], A,B,C,0.1) clenshaw(c[:,2], A,B,C,0.1); clenshaw(c[:,1], A,B,C,0.2) clenshaw(c[:,2], A,B,C,0.2)]
+            @test clenshaw(c,A,B,C,0.1; dims=1) ≈ [clenshaw(c[:,1],A,B,C,0.1), clenshaw(c[:,2],A,B,C,0.1)]'
+            @test clenshaw(c,A,B,C,0.1; dims=2) ≈ [clenshaw(c[1,:],A,B,C,0.1); clenshaw(c[2,:],A,B,C,0.1); clenshaw(c[3,:],A,B,C,0.1) ;;]
         end
     end
 
@@ -134,16 +130,16 @@ end
         cf, Af, Bf, Cf = float(c), float(A), float(B), float(C)
         @test @inferred(clenshaw(c, A, B, C, 1)) ≡ 6
         @test @inferred(clenshaw(c, A, B, C, 0.1)) ≡ -1.74
-        @test @inferred(clenshaw([1,2,3], A, B, C, [-1,0,1])) == clenshaw!([1,2,3],A, B, C, [-1,0,1]) == [2,-2,6]
+        @test @inferred(clenshaw([1,2,3], A, B, C, [-1,0,1])) == clenshaw!([-1,0,1], [1,2,3],A, B, C) == [2,-2,6]
         @test clenshaw(c, A, B, C, [-1,0,1]) isa Vector{Int}
         @test @inferred(clenshaw(Float64[], A, B, C, 1)) ≡ 0.0
 
         x = [1,0,0.1]
-        @test @inferred(clenshaw(c, A, B, C, x)) ≈ @inferred(clenshaw!(c, A, B, C, copy(x))) ≈
-            @inferred(clenshaw!(c, A, B, C, x, one.(x), similar(x))) ≈
-            @inferred(clenshaw!(cf, Af, Bf, Cf, x, one.(x),similar(x))) ≈
+        @test @inferred(clenshaw(c, A, B, C, x)) ≈ @inferred(clenshaw!(copy(x), c, A, B, C)) ≈
+            @inferred(clenshaw!(similar(x), c, A, B, C, x, one.(x))) ≈
+            @inferred(clenshaw!(similar(x), cf, Af, Bf, Cf, x, one.(x))) ≈
             @inferred(clenshaw([1.,2,3], A, B, C, x)) ≈
-            @inferred(clenshaw!([1.,2,3], A, B, C, copy(x))) ≈ [6,-2,-1.74]
+            @inferred(clenshaw!(copy(x), [1.,2,3], A, B, C)) ≈ [6,-2,-1.74]
     end
 
     @testset "Legendre" begin
@@ -162,7 +158,7 @@ end
                 c = [zeros(j-1); 1]
                 @test clenshaw(c, A, B, C, 1) ≈ v_1[j] # Julia code
                 @test clenshaw(c, A, B, C, 0.1) ≈  v_f[j] # Julia code
-                @test clenshaw!(c, A, B, C, [1.0,0.1], [1.0,1.0], [0.0,0.0])  ≈ [v_1[j],v_f[j]] # libfasttransforms
+                @test clenshaw!([0.0,0.0], c, A, B, C, [1.0,0.1], [1.0,1.0])  ≈ [v_1[j],v_f[j]] # libfasttransforms
             end
         end
     end
