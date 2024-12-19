@@ -14,7 +14,6 @@ function forwardrecurrence!(v::AbstractVector{T}, A::AbstractVector, B::Abstract
     forwardrecurrence!(v, A, B, C, x, convert(T, p0), p1)
 end
 
-
 Base.@propagate_inbounds forwardrecurrence_next(n, A, B, C, x, p0, p1) = muladd(muladd(A[n],x,B[n]), p1, -C[n]*p0)
 
 

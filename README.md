@@ -234,3 +234,21 @@ julia> @time clenshaw(inv.(1:n), Fill(2, ∞), Zeros(∞), Ones(∞), x)
   0.004574 seconds (5 allocations: 7.630 MiB)
 0.8396901361362448
 ```
+
+Clenshaw also supports in-place usage including a matrix of coefficients. This can be used to evaluate 2D polynomials, eg.
+$$
+f(x,y) = ∑_{k=1}^{n} ∑_{j=1}^n T_k(x) U_j(y) (k+2j)
+$$
+can be evaluated via:
+```julia
+julia> m,n = 5,6;
+
+julia> coeffs = ((1:m) .+ 2(1:n)');
+
+julia> x,y = 0.1,0.2;
+
+julia> A, B, C = Fill(2,n), Zeros{Int}(n), Ones{Int}(n+1);
+
+julia> clenshaw(vec(clenshaw(coeffs, x; dims=1)), A, B, C, y)
+9.358401024
+```
