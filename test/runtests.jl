@@ -282,3 +282,10 @@ end
     A, B, C = Fill(2,N-1), Zeros{Int}(N-1), Ones{Int}(N)
     @test @inferred(forwardrecurrence(N, A, B, C, x)) == [1,2x,4x^2-1, 8x^3-4x, 16x^4 - 12x^2 + 1]
 end
+
+@testset "Matrix" begin
+    N = 5
+    A, B, C = Fill(2,N-1), Zeros{Int}(N-1), Ones{Int}(N)
+    X = randn(6,6)
+    @test forwardrecurrence(N, A, B, C, X) ≈ [I(6), 2X, 4X^2-I, 8X^3-4X, 16X^4 - 12X^2 + I]
+end
