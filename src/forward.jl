@@ -51,7 +51,7 @@ forwardrecurrence(N::Integer, A::AbstractVector, B::AbstractVector, C::AbstractV
     forwardrecurrence!(Vector{polynomialtype(promote_type(eltype(A),eltype(B),eltype(C)),typeof(x))}(undef, N), A, B, C, x)
 
 forwardrecurrence(N::Integer, A::AbstractVector, B::AbstractVector, C::AbstractVector) =
-    forwardrecurrence!(Vector{promote_type(eltype(A),eltype(B),eltype(C))}(undef, N), A, B, C)
+    forwardrecurrence!(Vector{polynomialtype(promote_type(eltype(A),eltype(B),eltype(C)))}(undef, N), A, B, C)
 
 
 forwardrecurrence(A::AbstractVector, B::AbstractVector, C::AbstractVector, x...) = forwardrecurrence(min(length(A), length(B), length(C)), A, B, C, x...)
