@@ -199,6 +199,9 @@ end
                 only(clenshaw!([0.0], clenshaw!(Matrix{Float64}(undef,1,n), coeffs, x), A, B, C, y)) ≈ 
                 only(clenshaw!([0.0], clenshaw!(Matrix{Float64}(undef,m,1), coeffs, A, B, C, y), x)) ≈
                 forwardrecurrence(A_T, B_T, C_T, x)'coeffs*forwardrecurrence(A, B, C, y)
+
+        @test_throws DimensionMismatch clenshaw!(Matrix{Float64}(undef,2,n), coeffs, x)
+        @test_throws DimensionMismatch clenshaw!(Matrix{Float64}(undef,2,n), coeffs, A_T, B_T, C_T, x)
     end
 end
 
