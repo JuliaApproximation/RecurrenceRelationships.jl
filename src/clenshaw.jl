@@ -1,52 +1,45 @@
 
 
 """
-clenshaw!(c, A, B, C, x)
+clenshaw!(f::AbstractVecOrMat, c::AbstractVecOrMat, A, B, C, x::Number)
 
 evaluates the orthogonal polynomial expansion with coefficients `c` at points `x`,
 where `A`, `B`, and `C` are `AbstractVector`s containing the recurrence coefficients
 as defined in DLMF,
-overwriting `x` with the results.
+overwriting `f` with the results.
 
-If `c` is a matrix this treats each column as a separate vector of coefficients, returning a vector
-if `x` is a number and a matrix if `x` is a vector.
+If `c` is a matrix this treats each row (if `size(f,2) == 1`) or column (if `size(f,1) == 1`)` as a separate vector of coefficients.
 """
-clenshaw!(c::AbstractVector, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::AbstractVector) =
-    clenshaw!(c, A, B, C, x, one(eltype(x)), x)
+clenshaw!(f::AbstractVecOrMat, c::AbstractVecOrMat, A::AbstractVector, B::AbstractVector, C::AbstractVector, x) =
+    clenshaw!(f, c, A, B, C, x, one(eltype(x)))
 
-clenshaw!(c::AbstractMatrix, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::Number, f::AbstractVector) =
-    clenshaw!(c, A, B, C, x, one(eltype(x)), f)
-
-
-clenshaw!(c::AbstractMatrix, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::AbstractVector, f::AbstractMatrix) =
-    clenshaw!(c, A, B, C, x, one(eltype(x)), f)
-
+clenshaw!(x::AbstractVecOrMat, c::AbstractVecOrMat, A::AbstractVector, B::AbstractVector, C::AbstractVector) =
+    clenshaw!(x, c, A, B, C, x)
 
 """
-clenshaw!(c, A, B, C, x, ϕ₀, f)
+clenshaw!(f, c, A, B, C, x, ϕ₀)
 
-evaluates the orthogonal polynomial expansion with coefficients `c` at points `x`,
+evaluates the orthogonal polynomial expansion with coefficients `c` at point `x`,
 where `A`, `B`, and `C` are `AbstractVector`s containing the recurrence coefficients
 as defined in DLMF and ϕ₀ is the zeroth polynomial,
 overwriting `f` with the results.
 """
-function clenshaw!(c::AbstractVector, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::AbstractVector, ϕ₀, f::AbstractVector)
+function clenshaw!(f::AbstractVector, c::AbstractVector, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::AbstractVector, ϕ₀)
     f .= ϕ₀ .* clenshaw.(Ref(c), Ref(A), Ref(B), Ref(C), x)
 end
 
-
-function clenshaw!(c::AbstractMatrix, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::Number, ϕ₀::Number, f::AbstractVector)
-    size(c,2) == length(f) || throw(DimensionMismatch("coeffients size and output length must match"))
-    @inbounds for j in axes(c,2)
-        f[j] = ϕ₀ * clenshaw(view(c,:,j), A, B, C, x)
-    end
-    f
-end
-
-function clenshaw!(c::AbstractMatrix, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::AbstractVector, ϕ₀, f::AbstractMatrix)
-    (size(x,1),size(c,2)) == size(f) || throw(DimensionMismatch("coeffients size and output length must match"))
-    @inbounds for j in axes(c,2)
-        clenshaw!(view(c,:,j), A, B, C, x, ϕ₀, view(f,:,j))
+function clenshaw!(f::AbstractVecOrMat, c::AbstractMatrix, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::Number, ϕ₀::Number)
+    m,n = size(c)
+    if (size(f,1),size(f,2)) == (1,n) # dims = 1
+        @inbounds for j in axes(c,2)
+            f[1,j] = ϕ₀ * clenshaw(view(c,:,j), A, B, C, x)
+        end
+    elseif (size(f,1),size(f,2)) == (m,1) # dims = 2
+        @inbounds for k in axes(c,1)
+            f[k,1] = ϕ₀ * clenshaw(view(c,k,:), A, B, C, x)
+        end
+    else
+        throw(DimensionMismatch("coeffients size and output length must match"))
     end
     f
 end
@@ -58,7 +51,7 @@ Base.@propagate_inbounds _clenshaw_first(A, B, C, x, c, bn1, bn2) = muladd(mulad
 
 function check_clenshaw_recurrences(N, A, B, C)
     if length(A) < N || length(B) < N || length(C) < N+1
-        throw(ArgumentError("A, B must contain at least $N entries and C must contain at least $(N+1) entrie"))
+        throw(ArgumentError("A, B must contain at least $N entries and C must contain at least $(N+1) entries"))
     end
 end
 
@@ -92,40 +85,32 @@ function clenshaw(c::AbstractVector, A::AbstractVector, B::AbstractVector, C::Ab
     bn1
 end
 
-
 clenshaw(c::AbstractVector, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::AbstractVector) =
-    clenshaw!(c, A, B, C, copy(x))
+    clenshaw!(copy(x), c, A, B, C)
 
-function clenshaw(c::AbstractMatrix, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::Number)
+function clenshaw(c::AbstractMatrix, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::Number; dims)
     T = promote_type(eltype(c),eltype(A),eltype(B),eltype(C),typeof(x))
-    clenshaw!(c, A, B, C, x, Vector{T}(undef, size(c,2)))
-end
-
-function clenshaw(c::AbstractMatrix, A::AbstractVector, B::AbstractVector, C::AbstractVector, x::AbstractVector)
-    T = promote_type(eltype(c),eltype(A),eltype(B),eltype(C),typeof(x))
-    clenshaw!(c, A, B, C, x, Matrix{T}(undef, size(x,1), size(c,2)))
+    if dims == 1
+        clenshaw!(Matrix{T}(undef, 1, size(c,2)), c, A, B, C, x)
+    elseif dims == 2
+        clenshaw!(Matrix{T}(undef, size(c,1), 1), c, A, B, C, x)
+    else
+        throw(ArgumentError("dims must be 1 or 2"))
+    end
 end
 
 ###
 # Chebyshev T special cases
 ###
 
-"""
-   clenshaw!(c, x)
-
-evaluates the first-kind Chebyshev (T) expansion with coefficients `c` at points `x`,
-overwriting `x` with the results.
-"""
-clenshaw!(c::AbstractVector, x::AbstractVector) = clenshaw!(c, x, x)
-
 
 """
-   clenshaw!(c, x, f)
+   clenshaw!(f, c, x)
 
 evaluates the first-kind Chebyshev (T) expansion with coefficients `c` at points `x`,
 overwriting `f` with the results.
 """
-function clenshaw!(c::AbstractVector, x::AbstractVector, f::AbstractVector)
+function clenshaw!(f::AbstractVector, c::AbstractVector, x::AbstractVector)
     f .= clenshaw.(Ref(c), x)
 end
 
@@ -153,23 +138,34 @@ function clenshaw(c::AbstractVector, x::Number)
     end
 end
 
-function clenshaw!(c::AbstractMatrix, x::Number, f::AbstractVector)
-    size(c,2) == length(f) || throw(DimensionMismatch("coeffients size and output length must match"))
-    @inbounds for j in axes(c,2)
-        f[j] = clenshaw(view(c,:,j), x)
+function clenshaw!(f::AbstractVecOrMat, c::AbstractMatrix, x::Number)
+    m,n = size(c)
+    if (size(f,1),size(f,2)) == (1,n) # dims = 1
+        @inbounds for j in axes(c,2)
+            f[1,j] = clenshaw(view(c,:,j), x)
+        end
+    elseif (size(f,1),size(f,2)) == (m,1) # dims = 2
+        @inbounds for k in axes(c,1)
+            f[k,1] = clenshaw(view(c,k,:), x)
+        end
+    else
+        throw(DimensionMismatch("coeffients size and output length must match"))
     end
     f
 end
 
-function clenshaw!(c::AbstractMatrix, x::AbstractVector, f::AbstractMatrix)
-    (size(x,1),size(c,2)) == size(f) || throw(DimensionMismatch("coeffients size and output length must match"))
-    @inbounds for j in axes(c,2)
-        clenshaw!(view(c,:,j), x, view(f,:,j))
+clenshaw!(x, c) = clenshaw!(x, c, x)
+
+function clenshaw(c::AbstractMatrix, x::Number; dims)
+    T = polynomialtype(eltype(c),typeof(x))
+    if dims == 1
+        clenshaw!(Matrix{T}(undef, 1, size(c,2)), c, x)
+    elseif dims == 2
+        clenshaw!(Matrix{T}(undef, size(c,1), 1), c, x)
+    else
+        throw(ArgumentError("dims must be 1 or 2"))
     end
-    f
 end
 
-clenshaw(c::AbstractVector, x::AbstractVector) = clenshaw!(c, copy(x))
-clenshaw(c::AbstractMatrix, x::Number) = clenshaw!(c, x, Vector{promote_type(eltype(c),typeof(x))}(undef, size(c,2)))
-clenshaw(c::AbstractMatrix, x::AbstractVector) = clenshaw!(c, x, Matrix{promote_type(eltype(c),eltype(x))}(undef, size(x,1), size(c,2)))
 
+clenshaw(c::AbstractVector, x::AbstractVector) = clenshaw!(copy(x), c)
