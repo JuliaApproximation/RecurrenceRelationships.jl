@@ -4,6 +4,7 @@ using DynamicPolynomials
 
 
 @testset "forward" begin
+
     @testset "Chebyshev U" begin
         N = 5
         A, B, C = Fill(2,N-1), Zeros{Int}(N-1), Ones{Int}(N)
@@ -54,6 +55,13 @@ using DynamicPolynomials
         v_f = forwardrecurrence(N, A, B, C, 0.1)
         @test v_i isa Vector{Int}
         @test v_f isa Vector{Float64}
+    end
+
+    @testset "Dimension" begin
+        N = 5
+        A, B, C = Fill(2,N), Zeros{Int}(N), Ones{Int}(N)
+        @test length(forwardrecurrence(A, B, C)) == N+1
+        @test length(forwardrecurrence(3, A, B, C)) == 3
     end
 
     @testset "Tridiagonal and forward recurrence" begin
@@ -184,7 +192,7 @@ end
         n = 1000
         x = 0.1
         θ = acos(x)
-        @test forwardrecurrence(Vcat(1, Fill(2, n-1)), Zeros(n), Ones(n), x) ≈ cos.((0:n-1) .* θ)
+        @test forwardrecurrence(Vcat(1, Fill(2, n-1)), Zeros(n), Ones(n), x) ≈ cos.((0:n) .* θ)
         @test clenshaw((1:n), Vcat(1, Fill(2, n-1)), Zeros(n), Ones(n+1), x) ≈ sum(cos(k * θ) * (k+1) for k = 0:n-1)
     end
 
@@ -195,12 +203,11 @@ end
         x,y = 0.1,0.2
         A, B, C = Fill(2,n), Zeros{Int}(n), Ones{Int}(n+1)
         
-
-        A_T, B_T, C_T = [1; fill(2,m-1)], fill(0,m), fill(1,m+1)
+        A_T, B_T, C_T = [1; fill(2,m-2)], fill(0,m-1), fill(1,m-1)
         @test clenshaw(vec(clenshaw(coeffs, x; dims=1)), A, B, C, y) ≈ clenshaw(vec(clenshaw(coeffs, A, B, C, y; dims=2)), x) ≈
                 only(clenshaw!([0.0], clenshaw!(Matrix{Float64}(undef,1,n), coeffs, x), A, B, C, y)) ≈ 
                 only(clenshaw!([0.0], clenshaw!(Matrix{Float64}(undef,m,1), coeffs, A, B, C, y), x)) ≈
-                forwardrecurrence(A_T, B_T, C_T, x)'coeffs*forwardrecurrence(A, B, C, y)
+                forwardrecurrence(A_T, B_T, C_T, x)'coeffs*forwardrecurrence(A, B, C, y)[1:end-1]
 
         @test_throws DimensionMismatch clenshaw!(Matrix{Float64}(undef,2,n), coeffs, x)
         @test_throws DimensionMismatch clenshaw!(Matrix{Float64}(undef,2,n), coeffs, A_T, B_T, C_T, x)
