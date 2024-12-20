@@ -123,6 +123,8 @@ end
             @test clenshaw(c,A,B,C,0.1; dims=1) ≈ [clenshaw(c[:,1],A,B,C,0.1), clenshaw(c[:,2],A,B,C,0.1)]'
             @test clenshaw(c,A,B,C,0.1; dims=2) ≈ [clenshaw(c[1,:],A,B,C,0.1); clenshaw(c[2,:],A,B,C,0.1); clenshaw(c[3,:],A,B,C,0.1) ;;]
         end
+
+        @test_throws ArgumentError clenshaw([1,2,3], A, B, Ones{Int}(2), 0.1)
     end
 
     @testset "Chebyshev-as-general" begin
@@ -202,6 +204,9 @@ end
 
         @test_throws DimensionMismatch clenshaw!(Matrix{Float64}(undef,2,n), coeffs, x)
         @test_throws DimensionMismatch clenshaw!(Matrix{Float64}(undef,2,n), coeffs, A_T, B_T, C_T, x)
+
+        @test_throws ArgumentError clenshaw(coeffs, x; dims=3)
+        @test_throws ArgumentError clenshaw(coeffs, A_T, B_T, C_T, x; dims=3)
     end
 end
 
