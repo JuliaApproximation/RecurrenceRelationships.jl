@@ -14,7 +14,6 @@ function forwardrecurrence!(v::AbstractVector{T}, A::AbstractVector, B::Abstract
     forwardrecurrence!(v, A, B, C, x, convert(T, p0), p1)
 end
 
-
 Base.@propagate_inbounds forwardrecurrence_next(n, A, B, C, x, p0, p1) = muladd(muladd(A[n],x,B[n]), p1, -C[n]*p0)
 
 
@@ -49,10 +48,10 @@ where `A`, `B`, and `C` are `AbstractVector`s containing the first form recurren
 i.e. it returns 
 """
 forwardrecurrence(N::Integer, A::AbstractVector, B::AbstractVector, C::AbstractVector, x) =
-    forwardrecurrence!(Vector{polynomialtype(eltype(A),eltype(B),eltype(C),typeof(x))}(undef, N), A, B, C, x)
+    forwardrecurrence!(Vector{polynomialtype(promote_type(eltype(A),eltype(B),eltype(C)),typeof(x))}(undef, N), A, B, C, x)
 
 forwardrecurrence(N::Integer, A::AbstractVector, B::AbstractVector, C::AbstractVector) =
-    forwardrecurrence!(Vector{polynomialtype(eltype(A),eltype(B),eltype(C))}(undef, N), A, B, C)
+    forwardrecurrence!(Vector{polynomialtype(promote_type(eltype(A),eltype(B),eltype(C)))}(undef, N), A, B, C)
 
 
 forwardrecurrence(A::AbstractVector, B::AbstractVector, C::AbstractVector, x...) = forwardrecurrence(min(length(A), length(B), length(C)), A, B, C, x...)
