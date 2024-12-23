@@ -1,9 +1,9 @@
 """
    forwardrecurrence!(v, A, B, C, x)
 
-evaluates the orthogonal polynomials at points `x`,
+evaluates the orthogonal polynomials at point `x`,
 where `A`, `B`, and `C` are `AbstractVector`s containing the recurrence coefficients
-as defined in DLMF,
+as defined in [DLMF](https://dlmf.nist.gov/18.9),
 overwriting `v` with the results.
 """
 function forwardrecurrence!(v::AbstractVector{T}, A::AbstractVector, B::AbstractVector, C::AbstractVector, x=zero(T), p0=one(T)) where T
@@ -43,9 +43,9 @@ end
 """
    forwardrecurrence(N, A, B, C, x)
 
-evaluates the first `N` orthogonal polynomials at points `x`,
-where `A`, `B`, and `C` are `AbstractVector`s containing the first form recurrence coefficients,
-i.e. it returns 
+evaluates the first `N` orthogonal polynomials at point `x`,
+where `A`, `B`, and `C` are `AbstractVector`s containing the first form recurrence coefficients as defined in 
+[DLMF](https://dlmf.nist.gov/18.9), i.e. it returns Pᵢ(x) for i = 0, 1, ..., N-1
 """
 forwardrecurrence(N::Integer, A::AbstractVector, B::AbstractVector, C::AbstractVector, x) =
     forwardrecurrence!(Vector{polynomialtype(promote_type(eltype(A),eltype(B),eltype(C)),typeof(x))}(undef, N), A, B, C, x)
@@ -54,6 +54,14 @@ forwardrecurrence(N::Integer, A::AbstractVector, B::AbstractVector, C::AbstractV
     forwardrecurrence!(Vector{polynomialtype(promote_type(eltype(A),eltype(B),eltype(C)))}(undef, N), A, B, C)
 
 
-forwardrecurrence(A::AbstractVector, B::AbstractVector, C::AbstractVector, x...) = forwardrecurrence(min(length(A), length(B), length(C)), A, B, C, x...)
+"""
+   forwardrecurrence(A, B, C, x)
+
+evaluates the first `N+1` orthogonal polynomials at point `x`,
+where `A`, `B`, and `C` are `AbstractVector`s containing the first form recurrence coefficients as defined in 
+[DLMF](https://dlmf.nist.gov/18.9) and `N` is the minimum length of `A`, `B`, and `C`,
+i.e. it returns Pᵢ(x) for i = 0, 1, ..., `min(length(A), length(B), length(C))`
+"""
+forwardrecurrence(A::AbstractVector, B::AbstractVector, C::AbstractVector, x...) = forwardrecurrence(min(length(A), length(B), length(C))+1, A, B, C, x...)
 
 
