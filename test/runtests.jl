@@ -1,5 +1,5 @@
 using RecurrenceRelationships, LinearAlgebra, Test
-using FillArrays, LazyArrays
+using FillArrays, LazyArrays, StaticArrays
 using DynamicPolynomials
 
 
@@ -314,4 +314,32 @@ end
     A, B, C = Fill(2,N-1), Zeros{Int}(N-1), Ones{Int}(N)
     X = randn(6,6)
     @test forwardrecurrence(N, A, B, C, X) ≈ [I(6), 2X, 4X^2-I, 8X^3-4X, 16X^4 - 12X^2 + I]
+end
+
+@testset "StaticArrays views" begin
+    # Legendre recurrence
+    N = 20
+    A, B, C = (2(0:N) .+ 1) ./ ((0:N) .+ 1), zeros(N+1), (0:N+1) ./ ((0:N+1) .+ 1)
+    c = randn(N, 5)
+    # dims is a constant in these, so the return type is inferred
+    cols(c, A, B, C, x) = clenshaw(c, A, B, C, x; dims=1)
+    rows(c, A, B, C, x) = clenshaw(c, A, B, C, x; dims=2)
+    for x in (0.1, 0.3+0.1im), kr in (1:N, 3:7, 1:1, 1:0), js in (SVector(2,3), SVector(1,), SVector(5,1,4))
+        v = @inferred(cols(view(c, kr, js), A, B, C, x))
+        @test v isa SVector{length(js)}
+        @test v ≈ [clenshaw(c[kr,j], A, B, C, x) for j in js]
+        w = @inferred(rows(view(permutedims(c), js, kr), A, B, C, x))
+        @test w isa SVector{length(js)}
+        @test w ≈ v
+    end
+    f(c, A, B, C, x) = clenshaw(view(c, :, SVector(2,3)), A, B, C, x; dims=1)
+    f(c, A, B, C, 0.1)
+    @test @allocated(f(c, A, B, C, 0.1)) == 0
+    # other dims use the matrix version
+    @test clenshaw(view(c, :, SVector(2,3)), A, B, C, 0.1; dims=2) ≈ clenshaw(c[:,2:3], A, B, C, 0.1; dims=2)
+    @test clenshaw(view(c, SVector(2,3), :), A, B, C, 0.1; dims=1) ≈ clenshaw(c[2:3,:], A, B, C, 0.1; dims=1)
+    # mixed element types, lazy recurrence coefficients and NaN
+    @test clenshaw(view([1 2; 3 4; 5 6], :, SVector(1,2)), Vcat(1, Fill(2, 3)), Zeros{Int}(3), Ones{Int}(4), 0.1; dims=1) ≈ [clenshaw([1,3,5], 0.1), clenshaw([2,4,6], 0.1)]
+    @test clenshaw(view([1.0 2.0], :, SVector(1,2)), A, B, C, NaN; dims=1) == [1.0, 2.0]
+    @test_throws ArgumentError clenshaw(view(randn(N+3, 2), :, SVector(1,2)), A, B, C, 0.1; dims=1)
 end

@@ -7,17 +7,21 @@ version = "0.2.0"
 FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
 LazyArrays = "5078a376-72f3-5289-bfd5-ec5146d43c02"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
 
 [extensions]
 RecurrenceRelationshipsFillArraysExt = "FillArrays"
 RecurrenceRelationshipsLazyArraysExt = "LazyArrays"
 RecurrenceRelationshipsLinearAlgebraExt = "LinearAlgebra"
+RecurrenceRelationshipsStaticArraysCoreExt = "StaticArraysCore"
 
 [compat]
 DynamicPolynomials = "0.6.1"
 FillArrays = "1"
 LazyArrays = "1, 2"
 SpecialFunctions = "1, 2"
+StaticArrays = "1"
+StaticArraysCore = "1"
 julia = "1.10"
 
 [extras]
@@ -26,7 +30,8 @@ FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
 LazyArrays = "5078a376-72f3-5289-bfd5-ec5146d43c02"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["DynamicPolynomials", "FillArrays", "LazyArrays", "LinearAlgebra", "SpecialFunctions", "Test"]
+test = ["DynamicPolynomials", "FillArrays", "LazyArrays", "LinearAlgebra", "SpecialFunctions", "StaticArrays", "Test"]
