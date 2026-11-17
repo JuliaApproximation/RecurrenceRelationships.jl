@@ -333,8 +333,10 @@ end
         @test w ≈ v
     end
     f(c, A, B, C, x) = clenshaw(view(c, :, SVector(2,3)), A, B, C, x; dims=1)
-    f(c, A, B, C, 0.1)
-    @test @allocated(f(c, A, B, C, 0.1)) == 0
+    # measure inside a function: on Julia 1.10 a top-level @allocated also counts boxing the returned SVector
+    allocs_f(c, A, B, C, x) = @allocated f(c, A, B, C, x)
+    allocs_f(c, A, B, C, 0.1)
+    @test allocs_f(c, A, B, C, 0.1) == 0
     # other dims use the matrix version
     @test clenshaw(view(c, :, SVector(2,3)), A, B, C, 0.1; dims=2) ≈ clenshaw(c[:,2:3], A, B, C, 0.1; dims=2)
     @test clenshaw(view(c, SVector(2,3), :), A, B, C, 0.1; dims=1) ≈ clenshaw(c[2:3,:], A, B, C, 0.1; dims=1)
